@@ -1,0 +1,98 @@
+{
+   "close": {
+      "description": "Option category name for tab closing.",
+      "message": "Activate Tab After Tab Closing"
+   },
+   "closeDefault": {
+      "description": "Option value for tab closing.",
+      "message": "Chrome default"
+   },
+   "closeFirst": {
+      "description": "Option value for tab closing.",
+      "message": "First tab"
+   },
+   "closeLast": {
+      "description": "Option value for tab closing.",
+      "message": "Last tab"
+   },
+   "closeLeft": {
+      "description": "Option value for tab closing.",
+      "message": "Left tab"
+   },
+   "closeOrder": {
+      "description": "Option value for tab closing.",
+      "message": "In activated order"
+   },
+   "closeRight": {
+      "description": "Option value for tab closing.",
+      "message": "Right tab"
+   },
+   "description": {
+      "description": "Extension description in manifest.",
+      "message": "Customize tab opening position and closing behavior."
+   },
+   "misc": {
+      "description": "Option category name for misc.",
+      "message": "Miscellaneous"
+   },
+   "miscExternalLinkDefault": {
+      "description": "Option value for external link behavior.",
+      "message": "Chrome default for external links"
+   },
+   "miscExternalLinkUnfocus": {
+      "description": "Option value for window focus at external link opening.",
+      "message": "Don't activate Chrome window when external links are opened (if possible)"
+   },
+   "miscSameWindow": {
+      "description": "Option value for force same window.",
+      "message": "Open pop-up window as new tab"
+   },
+   "miscSameWindowException": {
+      "description": "Exception list for force same window.",
+      "message": "Exceptions (regular expression):"
+   },
+   "new": {
+      "description": "Option category name for new tab.",
+      "message": "New Tab"
+   },
+   "newBackground": {
+      "description": "Option value for new tab.",
+      "message": "Not activated (background)"
+   },
+   "newDefault": {
+      "description": "Option value for new tab.",
+      "message": "Chrome default"
+   },
+   "newForeground": {
+      "description": "Option value for new tab.",
+      "message": "Activated (foreground)"
+   },
+   "open": {
+      "description": "Option category name for tab opening.",
+      "message": "Tab Opening Position"
+   },
+   "openDefault": {
+      "description": "Option value for tab opening.",
+      "message": "Chrome default"
+   },
+   "openFirst": {
+      "description": "Option value for tab opening.",
+      "message": "Always first"
+   },
+   "openLast": {
+      "description": "Option value for tab opening.",
+      "message": "Always last"
+   },
+   "openLeft": {
+      "description": "Option value for tab opening.",
+      "message": "Left of current tab"
+   },
+   "openRight": {
+      "description": "Option value for tab opening.",
+      "message": "Right of current tab"
+   },
+   "optionTitle": {
+      "description": "Title for option page.",
+      "message": "Tab Position Customizer 2 Options"
+   }
+}

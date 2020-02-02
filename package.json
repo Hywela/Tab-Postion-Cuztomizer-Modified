@@ -2,7 +2,6 @@
   "name": "tab_position_customizer_modified",
   "version": "1.2.2",
   "description": "A Vue.js web extension",
-  "author": "Hywela <Kriss_kb@hotmail.com>",
   "engines": {
     "node": ">=10"
   },

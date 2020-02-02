@@ -1,0 +1,25 @@
+{
+  "name": "Tab Position Customizer - Modified",
+  "shortname":"Tab Position",
+  "default_locale": "en",
+  "description": "A extension for position of tabs, With vue.js",
+  "version": "1.2.2",
+  "manifest_version": 2,
+  "icons": {
+    "48": "icons/icon_48.png",
+    "128": "icons/icon_128.png",
+    "256": "icons/icon_256.png"
+  },
+
+  "browser_action": {
+    "default_title": "Tab Position Customizer - Modified"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "options_page": "options/options.html",
+
+  "permissions": [ "tabs", "webNavigation", "webRequest", "webRequestBlocking", "storage" ]
+}
