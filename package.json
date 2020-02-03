@@ -1,6 +1,6 @@
 {
   "name": "tab_position_customizer_modified",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A Vue.js web extension",
   "engines": {
     "node": ">=10"
