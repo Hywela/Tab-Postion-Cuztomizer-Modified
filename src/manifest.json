@@ -1,6 +1,6 @@
 {
   "name": "Tab Position Customizer - Modified",
-  "shortname":"Tab Position",
+  "short_name":"Tab Position",
   "default_locale": "en",
   "description": "A extension for position of tabs, With vue.js",
   "version": "1.2.3",

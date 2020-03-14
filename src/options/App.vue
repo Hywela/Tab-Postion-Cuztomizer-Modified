@@ -24,6 +24,10 @@
                   v-model="position"
                   :options="positions"
                 ></b-form-select>
+                <b-form-select
+                  v-model="closing_position"
+                  :options="closing_positions"
+                ></b-form-select>
               </b-input-group-append>
               <b-input-group-append>
                 <b-button variant="outline-secondary" @click="addToList()"
@@ -195,7 +199,10 @@
                   <h5 class="mb-1">
                     <span>
                       <b-badge variant="primary" pill>
-                        {{ item.value }}</b-badge
+                        {{ item.value.toUpperCase() }}</b-badge
+                      >
+                      <b-badge variant="secondary" pill>
+                        {{ item.closing.toUpperCase() }}</b-badge
                       >
                     </span>
                   </h5>
@@ -228,9 +235,10 @@ export default {
     return {
       msg: "",
       position: null,
+      closing_position: null, 
       positions: [
         {
-          text: "Select",
+          text: "Opening",
           value: null
         },
         {
@@ -248,7 +256,37 @@ export default {
         {
           text: "Left",
           value: "left"
-        }
+        },
+        {
+          text: "Default",
+          value: "default"
+        }  
+      ],
+      closing_positions: [
+        {
+          text: "Closing",
+          value: null
+        },
+        {
+          text: "First",
+          value: "first"
+        },
+        {
+          text: "Last",
+          value: "last"
+        },
+        {
+          text: "Right",
+          value: "right"
+        },
+        {
+          text: "Left",
+          value: "left"
+        },
+        {
+          text: "Default",
+          value: "default"
+        }  
       ],
       match: "",
       list: []
@@ -274,10 +312,12 @@ export default {
       if (this.match.length <= 0) {
         this.msg = "Missing input in Match";
       } else if (this.position == null) {
-        this.msg = "Nothing selected";
+        this.msg = "Opening behavior is not selected";
+      } else if (this.closing_position == null) {
+        this.msg = "Closing behavior is not selected";
       } else {
         this.msg = "";
-        this.list.push({ name: this.match, value: this.position });
+        this.list.push({ name: this.match, value: this.position, closing:this.closing_position });
       }
     },
     removeFromList(index) {
@@ -291,10 +331,7 @@ export default {
       });
     },
     getList() {
-      alert("Inside");
       chrome.storage.sync.get(["list"], function(items) {
-        alert("GET A" + items);
-
         this.items = items;
       });
     }

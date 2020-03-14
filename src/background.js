@@ -1,5 +1,6 @@
 var CurrentTabIndex = new Array();
 var TabIdsInActivatedOrder = new Array();
+var savedUrls = []; //need to be revorked - patch solution
 var FromOnRemoved = 0;
 var FromOnCreated = 0;
 var FromPopupAttaching = 0;
@@ -41,9 +42,6 @@ async function writeAllTabUrlToConsole() {
   try {
     // Get all the tabs
     tabs = await chrome.tabs.query({});
-
-    // Write all their URLs to the popup's console
-    for (let t of tabs) console.log(t.url, t.active);
   } catch (err) {
     // Handle errors
   }
@@ -59,6 +57,8 @@ function waitForTabLoad(loadingTabId) {
     });
   });
 }
+
+
 async function doOnCreated(tab) {
   if (FromOnRemoved == 1) {
     FromOnRemoved = 0;
@@ -115,6 +115,8 @@ async function doOnCreated(tab) {
     case "left":
       index = CurrentTabIndex[windowId];
       break;
+    case "default":
+      break;
   }
   if (index != -1) {
     if (windowId == tab.windowId) {
@@ -157,6 +159,7 @@ chrome.tabs.onCreated.addListener(function(tab) {
   waitForTabLoad(tab.id).then(doOnCreated(tab));
 });
 
+
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.url != null && PendingPopup && tab.id == PendingPopup.tabId) {
     if (!isExceptionUrl(tab.url, localStorage["AlwaysSameWindowException"])) {
@@ -175,6 +178,8 @@ chrome.tabs.onRemoved.addListener(function(tabId) {
   chrome.windows.getCurrent(function(window) {
     updateActivedTabOnRemoved(window.id, tabId);
   });
+
+
 });
 chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
   chrome.tabs.getSelected(moveInfo.windowId, function(tab) {
@@ -323,6 +328,12 @@ function updateActiveTabInfo(tabId) {
     }
   });
 }
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  if (changeInfo.url) {
+    savedUrls[tabId] = changeInfo.url;
+  }
+});
+
 function updateActivedTabOnRemoved(windowId, tabId) {
   var activeTabRemoved;
   if (
@@ -352,12 +363,32 @@ function updateActivedTabOnRemoved(windowId, tabId) {
     TabSwapMode = 0;
     return;
   }
-  switch (localStorage["tabClosingBehavior"]) {
+  var sw = null;
+
+  chrome.storage.sync.get(["list"], function(items) {
+    matchArray = items.list;
+  });
+
+  // Handle errors and match of closing
+
+  if (matchArray != null || savedUrls[tabId] != null) {
+    for (var i = 0; i < matchArray.length; i++) {
+      if (savedUrls[tabId].indexOf(matchArray[i].name) != -1
+      ) {
+        sw = matchArray[i].closing;
+      }
+    }
+  }
+
+  if (sw == null) sw = localStorage["tabClosingBehavior"];
+  switch (sw) {
+    case "default":
+      break;
     case "first":
-      activateTabByIndex(windowId, 0);
+      activateTabByIndex(windowId, 0); 
       break;
     case "last":
-      activateTabByIndex(windowId, 9999);
+      activateTabByIndex(windowId, 9999); 
       break;
     case "right":
       activateTabByIndex(windowId, CurrentTabIndex[windowId]);
@@ -381,6 +412,8 @@ function updateActivedTabOnRemoved(windowId, tabId) {
       });
       break;
   }
+
+  
 }
 function activateTabByIndex(windowId, tabIndex) {
   chrome.windows.getAll(
