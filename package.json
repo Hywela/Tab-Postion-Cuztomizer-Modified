@@ -16,9 +16,11 @@
     "watch:dev": "cross-env HMR=true npm run build:dev -- --watch"
   },
   "dependencies": {
+    "acorn": "^7.1.1",
     "bootstrap": "^4.4.1",
     "bootstrap-vue": "^2.4.0",
     "jquery": "^3.4.1",
+    "minimist": "^1.2.5",
     "popper.js": "^1.16.1",
     "vue": "^2.6.11"
   },
