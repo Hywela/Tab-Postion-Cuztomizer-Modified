@@ -50,7 +50,8 @@ async function writeAllTabUrlToConsole() {
 function waitForTabLoad(loadingTabId) {
   return new Promise(function(resolve) {
     chrome.tabs.onUpdated.addListener(function _listener(tabId, info, tab) {
-      if (loadingTabId == tabId && tab.status == "complete") {
+      if (loadingTabId == tabId && tab.status == "complete") {  
+        savedUrls[tabId] = tab.url;  
         chrome.tabs.onUpdated.removeListener(_listener);
         resolve();
       }
@@ -328,11 +329,6 @@ function updateActiveTabInfo(tabId) {
     }
   });
 }
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.url) {
-    savedUrls[tabId] = changeInfo.url;
-  }
-});
 
 function updateActivedTabOnRemoved(windowId, tabId) {
   var activeTabRemoved;
@@ -369,10 +365,12 @@ function updateActivedTabOnRemoved(windowId, tabId) {
     matchArray = items.list;
   });
 
+
   // Handle errors and match of closing
 
   if (matchArray != null || savedUrls[tabId] != null) {
     for (var i = 0; i < matchArray.length; i++) {
+      
       if (savedUrls[tabId].indexOf(matchArray[i].name) != -1
       ) {
         sw = matchArray[i].closing;
@@ -383,6 +381,9 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   if (sw == null) sw = localStorage["tabClosingBehavior"];
   switch (sw) {
     case "default":
+      chrome.tabs.getSelected(windowId, function(tab) {
+        updateActiveTabInfo(tab.id);
+      });
       break;
     case "first":
       activateTabByIndex(windowId, 0); 
@@ -412,8 +413,6 @@ function updateActivedTabOnRemoved(windowId, tabId) {
       });
       break;
   }
-
-  
 }
 function activateTabByIndex(windowId, tabIndex) {
   chrome.windows.getAll(
