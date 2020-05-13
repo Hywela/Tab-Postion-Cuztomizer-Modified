@@ -162,7 +162,22 @@ chrome.tabs.onCreated.addListener(function(tab) {
   waitForTabLoad(tab.id).then(doOnCreated(tab));
 });
 
-
+chrome.tabs.onActivated.addListener(function(tab) {
+      if (FromOnCreated == 1) {
+        FromOnCreated = 0;
+        return;
+      }
+      if (FromOnRemoved == 1) {
+        FromOnRemoved = 0;
+        return;
+      }
+      if (FromPopupAttaching == 1) {
+        FromPopupAttaching = 0;
+        return;
+      }
+      updateActiveTabInfo(tab.tabId);
+  
+});
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.url != null && PendingPopup && tab.id == PendingPopup.tabId) {
     if (!isExceptionUrl(tab.url, localStorage["AlwaysSameWindowException"])) {
@@ -170,11 +185,13 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         windowId: PendingPopup.windowId,
         index: PendingPopup.index
       });
+      savedUrls[tabId] = tab.url;
       processNewTabActivation(tab, PendingPopup.windowId);
     } else {
     }
     PendingPopup = null;
   }
+  savedUrls[tabId] = tab.url;
 });
 chrome.tabs.onRemoved.addListener(function(tabId) {
   FromOnRemoved = 1;
@@ -187,21 +204,7 @@ chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
     CurrentTabIndex[tab.windowId] = tab.index;
   });
 });
-chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo) {
-  if (FromOnCreated == 1) {
-    FromOnCreated = 0;
-    return;
-  }
-  if (FromOnRemoved == 1) {
-    FromOnRemoved = 0;
-    return;
-  }
-  if (FromPopupAttaching == 1) {
-    FromPopupAttaching = 0;
-    return;
-  }
-  updateActiveTabInfo(tabId);
-});
+
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
   FromOnRemoved = 1;
   updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
