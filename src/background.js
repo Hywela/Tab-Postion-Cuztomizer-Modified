@@ -12,10 +12,12 @@ var ExternalFucusWindowId = -1;
 var ExternalFucusDate = 0;
 var PendingPopup = null;
 var matchArray = null;
+
 if (localStorage["foregroundNewTab"] == "true") {
   localStorage["newCreatedTab"] = "foreground";
 }
 localStorage["foregroundNewTab"] = undefined;
+
 chrome.windows.getAll(
   {
     populate: false
@@ -179,8 +181,6 @@ chrome.tabs.onRemoved.addListener(function(tabId) {
   chrome.windows.getCurrent(function(window) {
     updateActivedTabOnRemoved(window.id, tabId);
   });
-
-
 });
 chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
   chrome.tabs.getSelected(moveInfo.windowId, function(tab) {
@@ -361,13 +361,8 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   }
   var sw = null;
 
-  chrome.storage.sync.get(["list"], function(items) {
-    matchArray = items.list;
-  });
-
-
   // Handle errors and match of closing
-
+if(matchArray != null){
   if (matchArray != null || savedUrls[tabId] != null) {
     for (var i = 0; i < matchArray.length; i++) {
       
@@ -377,7 +372,7 @@ function updateActivedTabOnRemoved(windowId, tabId) {
       }
     }
   }
-
+}
   if (sw == null) sw = localStorage["tabClosingBehavior"];
   switch (sw) {
     case "default":
@@ -402,12 +397,12 @@ function updateActivedTabOnRemoved(windowId, tabId) {
         TabIdsInActivatedOrder[windowId][
           TabIdsInActivatedOrder[windowId].length - 1
         ];
-      chrome.tabs.update(activateTabId, {
-        selected: true
-      });
-      updateActiveTabInfo(activateTabId);
+        chrome.tabs.update(activateTabId, {
+          selected: true
+        });
+        updateActiveTabInfo(activateTabId);
       break;
-    default:
+     default:
       chrome.tabs.getSelected(windowId, function(tab) {
         updateActiveTabInfo(tab.id);
       });
@@ -433,7 +428,7 @@ function activateTabByIndex(windowId, tabIndex) {
             tab = tabs[tabIndex] || tabs[0];
           }
           chrome.tabs.update(tab.id, {
-            selected: true
+            selected: true,
           });
           updateActiveTabInfo(tab.id);
           break;
@@ -452,3 +447,23 @@ function isExceptionUrl(url, exceptionString) {
   }
   return false;
 }
+
+function lastTab(info,tab) {
+  var windowId = tab.windowId;
+
+  var activateTabId =
+        TabIdsInActivatedOrder[windowId][
+          TabIdsInActivatedOrder[windowId].length - 2
+        ];
+      chrome.tabs.update(activateTabId, {
+        selected: true
+      });
+      waitforUpdate(activateTabId).then(updateActiveTabInfo(activateTabId));
+  }
+  
+      chrome.contextMenus.create({
+        title: "Last Tab", 
+        contexts:["page"], 
+        onclick: lastTab
+      });
+  

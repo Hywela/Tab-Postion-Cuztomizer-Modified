@@ -199,10 +199,10 @@
                   <h5 class="mb-1">
                     <span>
                       <b-badge variant="primary" pill>
-                        {{ item.value.toUpperCase() }}</b-badge
+                        {{ item.value }}</b-badge
                       >
                       <b-badge variant="secondary" pill>
-                        {{ item.closing.toUpperCase() }}</b-badge
+                        {{ item.closing }}</b-badge
                       >
                     </span>
                   </h5>
@@ -280,6 +280,10 @@ export default {
           value: "right"
         },
         {
+          text: "Order",
+          value: "order"
+        },
+        {
           text: "Left",
           value: "left"
         },
@@ -296,8 +300,7 @@ export default {
     this.restore(this);
   },
   updated: function() {
-    chrome.storage.sync.set({ list: this.list }, function() {});
-
+    chrome.storage.sync.set({ list: this.list}, function() {});
     // this.init();
   },
   methods: {
