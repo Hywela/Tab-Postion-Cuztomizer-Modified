@@ -1,7 +1,10 @@
-<div style="text-align:center">
-  <h1> <img src="/src/icons/icon_48.png" > Tab-Postion-Cuztomizer-Modified </h1>
+<p align="center">
+<img src="/src/icons/icon_128.png" class="center">  
+</p>
+ 
+ <h1 align="center">Tab-Postion-Cuztomizer-Modified </h1>
 
-<p style="text-align:center">A extension for position of tabs</p>
+<p align="center">A extension for position of tabs</p>
 
 #### Based on: Tab Position Customizer 2
 
