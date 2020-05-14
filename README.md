@@ -18,14 +18,18 @@ Changelog:
 1.2.4
 + Closing position
 + Default choice in opening position
+
 1.2.5
 + added WebNavigation permission. (Accidentally removed it). 
 + Optimized some from 1.2.4
+
 1.2.7
 + Fixed so it doesn't brake on update. 
+
 1.2.8
 + Closing behavior added : In activated order added(named "order"). 
 + Context menu for last active tab added. Right click -> last tab
+
 1.2.9
 + Changed deprecated api call. 
 + Updated to jquery 3.5 for security reasons. 
