@@ -2,9 +2,13 @@
 <a href="#"><img src="/src/icons/icon_128.png" class="center"></a>
 </p>
  
- <h1 align="center">Tab-Postion-Cuztomizer-Modified </h1>
+ <h1 align="center">Tab Postion Cuztomizer - Modified </h1>
 
 <p align="center">A extension for position of tabs</p>
+
+<br>
+<br>
+<br>
 
 #### Based on: Tab Position Customizer 2
 
