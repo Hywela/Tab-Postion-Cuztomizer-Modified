@@ -1,7 +1,6 @@
 {
   "name": "Tab Position Customizer - Modified",
   "short_name":"Tab Position",
-  "default_locale": "en",
   "description": "A extension for position of tabs",
   "version": "1.2.9",
   "manifest_version": 2,
@@ -10,16 +9,11 @@
     "128": "icons/icon_128.png",
     "256": "icons/icon_256.png"
   },
-
-  "browser_action": {
-    "default_title": "Tab Position Customizer - Modified"
-  },
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": 
+      ["background.js"]
   },
+  "default_locale": "en",
   "options_page": "options/options.html",
-
   "permissions": [ "tabs", "storage","webNavigation","contextMenus"]
 }

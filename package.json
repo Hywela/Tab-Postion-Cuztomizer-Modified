@@ -3,32 +3,32 @@
   "version": "1.2.9",
   "description": "A Vue.js web extension",
   "author": "Hywela <Kriss_kb@hotmail.com>",
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
+    "build": "cross-env NODE_ENV=production webpack --hide-modules",
+    "build-zip": "node scripts/build-zip.js",
+    "build:dev": "cross-env NODE_ENV=development webpack --hide-modules",
+    "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/_locales/**/*.json'",
     "prettier": "prettier \"src/**/*.{js,vue}\"",
     "prettier:write": "npm run prettier -- --write",
-    "build": "cross-env NODE_ENV=production webpack --hide-modules",
-    "build:dev": "cross-env NODE_ENV=development webpack --hide-modules",
-    "build-zip": "node scripts/build-zip.js",
     "watch": "npm run build -- --watch",
     "watch:dev": "cross-env HMR=true npm run build:dev -- --watch"
   },
   "dependencies": {
-    "acorn": "^7.1.1",
-    "bootstrap": "^4.4.1",
-    "bootstrap-vue": "^2.4.0",
+    "acorn": "^7.2.0",
+    "bootstrap": "^4.5.0",
+    "bootstrap-vue": "^2.15.0",
     "jquery": "^3.5.1",
     "minimist": "^1.2.5",
     "popper.js": "^1.16.1",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-i18n": "^8.18.1"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-optional-chaining": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/runtime-corejs3": "^7.4.0",
+    "@intlify/vue-i18n-loader": "^1.0.0",
     "@types/chrome": "^0.0.74",
     "archiver": "^3.0.0",
     "babel-loader": "^8.0.2",
@@ -41,10 +41,14 @@
     "mini-css-extract-plugin": "^0.9.0",
     "node-sass": "^4.9.3",
     "sass-loader": "^7.1.0",
+    "vue-cli-plugin-i18n": "~1.0.1",
     "vue-loader": "^15.4.2",
     "vue-template-compiler": "^2.6.10",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.3.10",
     "webpack-extension-reloader": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=10"
   }
 }

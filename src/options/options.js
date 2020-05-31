@@ -5,9 +5,11 @@ import "bootstrap-vue/dist/bootstrap-vue.css";
 import "jquery/src/jquery.js";
 import "bootstrap/dist/js/bootstrap.min.js";
 import { BootstrapVue, IconsPlugin } from "bootstrap-vue";
+import i18n from "../i18n";
 
 Vue.use(BootstrapVue);
 Vue.use(IconsPlugin);
+
 
 const sameWindowFormExceptionDefault = "^chrome-devtools://\n^chrome://\n";
 
@@ -18,8 +20,8 @@ String.prototype.trim = function() {
 };
 
 function init() {
-  initText();
-  restoreOptions();
+  //initText();
+  //restoreOptions();
 }
 function popfromList(element) {
   list.splice(element.id, 1);
@@ -211,6 +213,7 @@ window.addEventListener("load", init, false);
 
 new Vue({
   el: "#app",
+  i18n,
   data: {},
   render: h => h(App)
 });

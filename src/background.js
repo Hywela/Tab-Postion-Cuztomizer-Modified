@@ -185,6 +185,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         windowId: PendingPopup.windowId,
         index: PendingPopup.index
       });
+      if(savedUrls[tabId] != null)
       savedUrls[tabId] = tab.url;
       processNewTabActivation(tab, PendingPopup.windowId);
     } else {
