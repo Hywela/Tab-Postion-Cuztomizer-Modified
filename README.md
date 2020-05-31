@@ -29,7 +29,7 @@ Based on the Tab Position Customizer 2 extension mentioned above.
 
 ## Changelog: 
 
-#### 1.3.0
+#### 1.3.0 (still in testing, not on chrome store yet)
 - Reworked option page, moved it into bootstrap design. 
 - Dark Mode added and working. 
 - Many minior style choices, tooltip's added some places. 
