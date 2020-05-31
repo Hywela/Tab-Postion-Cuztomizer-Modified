@@ -29,6 +29,11 @@ Based on the Tab Position Customizer 2 extension mentioned above.
 
 ## Changelog: 
 
+#### 1.3.0
+- Reworked option page, moved it into bootstrap design. 
+- Dark Mode added and working. 
+- Many minior style choices, tooltip's added some places. 
+- Disabled misc functontions, since they are not working 100 % of the time and throwing some errors. 
 #### 1.2.9
 - Changed deprecated api call. 
 - Updated to jquery 3.5 for security reasons. 
