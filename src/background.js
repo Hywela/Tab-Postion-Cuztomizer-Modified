@@ -1,3 +1,5 @@
+const { FormSelectPlugin } = require("bootstrap-vue");
+
 var CurrentTabIndex = new Array();
 var TabIdsInActivatedOrder = new Array();
 var savedUrls = []; //need to be revorked - patch solution
@@ -60,7 +62,18 @@ function waitForTabLoad(loadingTabId) {
     });
   });
 }
-
+// async function waitForGetID(activeTabRemoved, windowId) {
+//  /* return new Promise(function(resolve) {
+//     if (!activeTabRemoved) {
+//     chrome.tabs.onUpdated.getSelected(windowId, function(tab)
+//     {
+//       if (tab == undefined) resolve();
+//       CurrentTabIndex[windowId] = tab.index;
+//       resolve();
+//     });
+//     resolve();
+//   }});*/
+// }
 
 async function doOnCreated(tab) {
   if (FromOnRemoved == 1) {
@@ -162,7 +175,8 @@ chrome.tabs.onCreated.addListener(function(tab) {
   waitForTabLoad(tab.id).then(doOnCreated(tab));
 });
 
-chrome.tabs.onActivated.addListener(function(tab) {
+chrome.tabs.onActivated.addListener(function(info) {
+
       if (FromOnCreated == 1) {
         FromOnCreated = 0;
         return;
@@ -175,8 +189,10 @@ chrome.tabs.onActivated.addListener(function(tab) {
         FromPopupAttaching = 0;
         return;
       }
-      updateActiveTabInfo(tab.tabId);
-  
+    
+      updateActiveTabInfo(info.tabId);
+      
+   
 });
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.url != null && PendingPopup && tab.id == PendingPopup.tabId) {
@@ -194,21 +210,24 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
   savedUrls[tabId] = tab.url;
 });
-chrome.tabs.onRemoved.addListener(function(tabId) {
+
+chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   FromOnRemoved = 1;
-  chrome.windows.getCurrent(function(window) {
-    updateActivedTabOnRemoved(window.id, tabId);
-  });
-});
+    updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
+    matchRemove(removeInfo.windowId, tabId);
+  
+});//Function End
+
 chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
   chrome.tabs.getSelected(moveInfo.windowId, function(tab) {
     CurrentTabIndex[tab.windowId] = tab.index;
   });
+
 });
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
   FromOnRemoved = 1;
-  updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
+   updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
 });
 chrome.windows.onCreated.addListener(function(window) {
   CurrentTabIndex[window.id] = 0;
@@ -335,6 +354,7 @@ function updateActiveTabInfo(tabId) {
 }
 
 function updateActivedTabOnRemoved(windowId, tabId) {
+
   var activeTabRemoved;
   if (
     TabIdsInActivatedOrder[windowId][
@@ -359,12 +379,15 @@ function updateActivedTabOnRemoved(windowId, tabId) {
     });
     return;
   }
-  if (TabSwapMode == 1) {
+
+   if (TabSwapMode == 1) {
     TabSwapMode = 0;
     return;
-  }
+  } 
+  
+}
+function matchRemove(windowId, tabId){
   var sw = null;
-
   // Handle errors and match of closing
 if(matchArray != null){
   if (matchArray != null || savedUrls[tabId] != null) {
@@ -412,7 +435,9 @@ if(matchArray != null){
       });
       break;
   }
+
 }
+
 function activateTabByIndex(windowId, tabIndex) {
   chrome.windows.getAll(
     {
@@ -441,6 +466,7 @@ function activateTabByIndex(windowId, tabIndex) {
     }
   );
 }
+
 function isExceptionUrl(url, exceptionString) {
   var exceptions = exceptionString.split("\n");
   for (var i = 0; i < exceptions.length - 1; i++) {

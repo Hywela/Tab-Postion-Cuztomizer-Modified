@@ -1,0 +1,193 @@
+{
+  "close": {
+     "description": "Option category name for tab closing.",
+     "message": "Activate Tab After Tab Closing",
+  "default": {
+     "description": "Option value for tab closing.",
+     "message": "Chrome default",
+     "value": "default"
+  },
+  "first": {
+     "description": "Option value for tab closing.",
+     "message": "Always first",
+     "value": "first"
+  },
+  "last": {
+     "description": "Option value for tab closing.",
+     "message": "Last tab",
+     "value": "last"
+  },
+  "left": {
+     "description": "Option value for tab closing.",
+     "message": "Left of current tab",
+     "value": "left"
+  },
+  "order": {
+     "description": "Option value for tab closing.",
+     "message": "In activated order",
+     "value": "order"
+  },
+  "right": {
+     "description": "Option value for tab closing.",
+     "message": "Right of current tab",
+     "value": "right"
+  }
+},
+
+  "description": {
+     "description": "Extension description in manifest.",
+     "message": "Customize tab opening position and closing behavior."
+  },
+  "misc": {
+     "description": "Option category name for misc.",
+     "message": "Miscellaneous"
+  },
+  "miscExternalLinkDefault": {
+     "description": "Option value for external link behavior.",
+     "message": "Chrome default for external links"
+  },
+  "miscExternalLinkUnfocus": {
+     "description": "Option value for window focus at external link opening.",
+     "message": "Don't activate Chrome window when external links are opened (if possible)"
+  },
+  "miscSameWindow": {
+     "description": "Option value for force same window.",
+     "message": "Open pop-up window as new tab"
+  },
+  "miscSameWindowException": {
+     "description": "Exception list for force same window.",
+     "message": "Exceptions (regular expression):"
+  },
+
+
+  "new": {
+     "description": "Option category name for new tab.",
+     "message": "New Tab",
+  
+  "background": {
+     "description": "Option value for new tab.",
+     "message": "Not activated (background)",
+     "value": "background"
+  },
+  "default": {
+     "description": "Option value for new tab.",
+     "message": "Chrome default",
+     "value": "default"
+  },
+  "foreground": {
+     "description": "Option value for new tab.",
+     "message": "Activated (foreground)",
+     "value": "foreground"
+  }
+},
+
+
+  "open": {
+     "description": "Option category name for tab opening.",
+     "message": "Tab Opening Position",
+  "default": {
+     "description": "Option value for tab opening.",
+     "message": "Chrome default",
+     "value": "default"
+  },
+  "first": {
+     "description": "Option value for tab opening.",
+     "message": "Always first",
+     "value": "first"
+  },
+  "last": {
+     "description": "Option value for tab opening.",
+     "message": "Always last",
+     "value": "last"
+  },
+  "left": {
+     "description": "Option value for tab opening.",
+     "message": "Left of current tab",
+     "value": "left"
+  },
+  "right": {
+     "description": "Option value for tab opening.",
+     "message": "Right of current tab",
+     "value": "right"
+  }
+},
+
+"tooltip": {
+  "message": "Tooltip",
+  "close": "Opening behavior",
+  "open": "Closing behavior"
+},
+"delete_button": {
+  "message": "Delete",
+  "tooltip": "Delete"
+},
+  "appName": {
+     "description": "",
+     "message": "Tab Position Customizer - Modified Options"
+  },
+  "appDesc": {
+    "message": "A extension for position of tabs"
+  },
+  "formTitle": {
+     "description": "",
+     "message": "Match"
+  },
+  "button_add": {
+     "description": "Submit input to match list",
+     "message": "Add"
+  },
+  "disabled": {
+     "description": "Message on function disabled",
+     "message": "Currently disabled - Being checked for issue's"
+  },
+  "wrong_input_01": {
+     "description": "Input Error",
+     "message": "Missing input in Match"
+  },
+  "wrong_input_02": {
+     "description": "Input Error",
+     "message": "Opening behavior is not selected"
+  },
+  "wrong_input_03": {
+     "description": "Input Error",
+     "message": "Closing behavior is not selected"
+  },
+
+
+
+  "match_option":{
+    "message": "",
+  "first": {
+     "value": "first",
+     "message": "First"
+  },
+  "last": {
+     "value": "last",
+     "message": "Last"
+  },
+  "right": {
+     "value": "right",
+     "message": "Right"
+  },
+  "order": {
+     "value": "order",
+     "message": "Order"
+  },
+  "left": {
+     "value": "left",
+     "message": "Left"
+  },
+  "default": {
+     "value": "default",
+     "message": "Default"
+  },
+  "opening": {
+     "value": "opening",
+     "message": "Opening"
+  },
+  "closing": {
+     "value": "closing",
+     "message": "Closing"
+  }
+  }
+}

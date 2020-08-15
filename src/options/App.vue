@@ -34,23 +34,25 @@
             <p class="text-danger" v-if="msg">{{ msg }}</p>
             <b-input-group>
               <b-input-group-prepend>
-                <b-input-group-text>{{ $t('formTitle').message }}</b-input-group-text>
+                <b-input-group-text class ="" v-bind:class="{ 'bg-dark text-dark': darkMode }">
+                  {{ $t('formTitle').message }}</b-input-group-text>
               </b-input-group-prepend>
 
-              <b-form-input v-model="match"></b-form-input>
+              <b-form-input class ="" v-bind:class="{ 'bg-dark text-dark' : darkMode }" v-model="match"></b-form-input>
 
               <b-input-group-append>
-                <b-form-select 
+                <b-form-select class ="" v-bind:class="{ 'bg-dark text-dark' : darkMode }"
+                  
                   v-model="position"
                   :options="positions"
                 ></b-form-select>
-                <b-form-select 
+                <b-form-select class ="" v-bind:class="{ 'bg-dark text-dark' : darkMode }"
                   v-model="closing_position"
                   :options="closing_positions"
                 ></b-form-select>
               </b-input-group-append>
               <b-input-group-append>
-                <b-button variant="outline-secondary"   @click="addToList()"
+                <b-button  :variant="dark_mode_radio"   @click="addToList()"
                   >{{ $t('button_add').message }}</b-button
                 >
               </b-input-group-append>
@@ -64,12 +66,14 @@
               <h6 class="text-dark">{{ $t('open').message }}  {{selectedOpen}}</h6>
             </div>
                 <b-form-group>
-                  <b-form-radio-group class="text-dark"
+                  <b-form-radio-group  class="text-dark"
+                    buttons
+                    :button-variant="'outline-'+darkModevariant"
                     v-model="selectedOpen"
                     :options="optionsOpen"
                     @change.native="saveTolocalstorage('tabOpeningPosition',selectedOpen)"
                     name="openRadio"
-                    stacked
+                    
                   ></b-form-radio-group>
                 </b-form-group>
           </div>
@@ -82,11 +86,12 @@
             </div>
                 <b-form-group>
                   <b-form-radio-group class="text-dark"
+                    buttons
+                    :button-variant="'outline-'+darkModevariant"
                     v-model="selectedClose"
                     :options="optionsClose"
                     @change.native="saveTolocalstorage('tabClosingBehavior',selectedClose)"
                     name="closeRadio"
-                    stacked
                   ></b-form-radio-group>
                 </b-form-group>
           </div>
@@ -100,17 +105,18 @@
 
                 <b-form-group>
                   <b-form-radio-group class="text-dark"
+                    buttons
+                    :button-variant="'outline-'+darkModevariant"
                     v-model="selectedNew"
                     :options="optionsNew"
                     @change.native="saveTolocalstorage('newCreatedTab',selectedNew)"
                     name="newRadio"
-                    stacked
                   ></b-form-radio-group>
                 </b-form-group>
 
           </div>
         </div>
-        <div class="row">
+        <div class="row" hidden>
           <div class="col">
             
             <div class="section-header">
@@ -120,7 +126,7 @@
 
             <form name="same_window">
               <div>
-                <input type="checkbox" name="true" disabled/><span
+                <input type="checkbox" name="true"  disabled/><span
                 disabled>{{ $t('miscSameWindow').message }}</span>
                 <div class="exception-list">
                   <span id="miscSameWindowExceptionText">{{ $t('miscSameWindowException').message }}</span><br />
@@ -136,7 +142,7 @@
             </form>
             <form name="external_link_default">
               <div>
-                <input type="checkbox" name="true" disabled/><span
+                <input type="checkbox" name="true"  disabled/><span
                   >
                   {{ $t('miscExternalLinkDefault').message }}
                 </span>
@@ -154,19 +160,19 @@
       </div>
       <div class="col">
         <div>
-          <h3><span class="text-dark" id="subOptionTitle2Text" />
+          <span class="text-dark" id="subOptionTitle2Text" />
                     <small
                     ><b-button
                       v-b-tooltip.hover title="Show/hide"
                       size="sm"
-                      variant="outline-primary"
+                      :variant="'outline-' + darkModevariant"
                       class="mb-2"
                       @click="expandList"
                     >
                       <b-icon icon="chevron-bar-expand" aria-hidden="true"></b-icon>
                       <span class="sr-only">Show/hide</span>
                     </b-button></small>
-          </h3>
+          
 
         </div>
         <div class="row">
@@ -188,12 +194,13 @@
                     size="1em" 
                     square 
                     v-bind:src="'https://s2.googleusercontent.com/s2/favicons?domain_url='+item.name"
+                    
                     v-b-tooltip.hover v-bind:title="item.name"
                   ></b-avatar>
-                      <b-badge variant="warning" v-b-tooltip.hover v-bind:title="$t('tooltip').open" square>
+                      <b-badge :variant="darkModevariant" v-b-tooltip.hover v-bind:title="$t('tooltip').open" square>
                         {{ getLocalization( 'open', item.value) }}</b-badge
                       >
-                      <b-badge variant="info" v-b-tooltip.hover v-bind:title="$t('tooltip').close" square>
+                      <b-badge :variant="darkModevariant" v-b-tooltip.hover v-bind:title="$t('tooltip').close" square>
                         {{ getLocalization( 'close', item.closing) }}</b-badge
                       >
                     </span>
@@ -360,7 +367,8 @@ export default {
       ],
       match: "",
       list: [],
-      darkModevariant:"dark"
+      darkModevariant:"dark",
+      dark_mode_radio:"outline-secondary"
     };
   },
   created: function() {
@@ -407,7 +415,7 @@ export default {
     },
     darkModeSwitch(){
       
-      if(this.darkMode) {this.darkModevariant = 'light'; } else this.darkModevariant = 'dark'
+      if(this.darkMode) {this.darkModevariant = 'secondary'; this.dark_mode_radio = "outline-light text-dark";} else {this.darkModevariant = 'dark'; this.dark_mode_radio = "outline-dark";}
       this.saveDarkMode();
     },
     saveDarkMode(){
@@ -501,6 +509,14 @@ html,.body{
 .text-dark{
   color:#C0C0C0	!important;
 }
+// .input-group{
+//   color:white !important;
+//     background-color: #000000 !important;
+//     border-color: secondary !important;
+//   outline-color: red;
+//   border-inline-color: green;
+// }
+
 .text-primary{
   color:#C0C0C0	!important;
 }
