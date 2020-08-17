@@ -41,16 +41,7 @@ chrome.windows.getAll(
     }
   }
 );
-async function writeAllTabUrlToConsole() {
-  var tabs = null;
-  try {
-    // Get all the tabs
-    tabs = await chrome.tabs.query({});
-  } catch (err) {
-    // Handle errors
-  }
-  return tabs;
-}
+
 function waitForTabLoad(loadingTabId) {
   return new Promise(function(resolve) {
     chrome.tabs.onUpdated.addListener(function _listener(tabId, info, tab) {
@@ -103,6 +94,9 @@ async function doOnCreated(tab) {
   chrome.storage.sync.get(["list"], function(items) {
     matchArray = items.list;
   });
+  
+   //Function End
+
 
   // Handle errors
 
@@ -176,7 +170,6 @@ chrome.tabs.onCreated.addListener(function(tab) {
 });
 
 chrome.tabs.onActivated.addListener(function(info) {
-  
       if (FromOnCreated == 1) {
         FromOnCreated = 0;
         return;
@@ -210,14 +203,13 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
   savedUrls[tabId] = tab.url;
 });
-
-
 chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   FromOnRemoved = 1;
    //onRemoved = true; 
-     
+
    updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
-    matchRemove(removeInfo.windowId,tabId);
+   matchRemove(removeInfo.windowId,tabId);
+  
 });//Function End
 
 chrome.tabs.onMoved.addListener(function(moveInfo) {
