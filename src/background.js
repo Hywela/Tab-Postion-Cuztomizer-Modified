@@ -14,6 +14,7 @@ var ExternalFucusWindowId = -1;
 var ExternalFucusDate = 0;
 var PendingPopup = null;
 var matchArray = null;
+var onRemoved = false;
 
 if (localStorage["foregroundNewTab"] == "true") {
   localStorage["newCreatedTab"] = "foreground";
@@ -31,9 +32,9 @@ chrome.windows.getAll(
       if (windows[i].focused) {
         ActiveWindowId = windowId;
       }
-      chrome.tabs.getSelected(windowId, function(tab) {
-        CurrentTabIndex[tab.windowId] = tab.index;
-        TabIdsInActivatedOrder[tab.windowId].push(tab.id);
+      chrome.tabs.query({ windowId:windowId }, function(tabs) {
+        CurrentTabIndex[tabs[0].windowId] = tabs[0].index;
+        TabIdsInActivatedOrder[tabs[0].windowId].push(tabs[0].id);
       });
       chrome.storage.sync.get(["list"], function(items) {
         matchArray = items.list;
@@ -176,7 +177,7 @@ chrome.tabs.onCreated.addListener(function(tab) {
 });
 
 chrome.tabs.onActivated.addListener(function(info) {
-
+  
       if (FromOnCreated == 1) {
         FromOnCreated = 0;
         return;
@@ -192,6 +193,8 @@ chrome.tabs.onActivated.addListener(function(info) {
     
       updateActiveTabInfo(info.tabId);
       
+      // if(onRemoved){
+      // matchRemove(info.windowId, info.tabId); onRemoved = false;}
    
 });
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
@@ -211,19 +214,25 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   savedUrls[tabId] = tab.url;
 });
 
+
 chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   FromOnRemoved = 1;
+   //onRemoved = true; 
     updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
-    matchRemove(removeInfo.windowId, tabId);
+    matchRemove(removeInfo.windowId,tabId);
+    
   
 });//Function End
 
 chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
-  chrome.tabs.getSelected(moveInfo.windowId, function(tab) {
-    CurrentTabIndex[tab.windowId] = tab.index;
+
+    chrome.tabs.query({ windowId:moveInfo.windowId }, function(tabs) {
+    
+    CurrentTabIndex[tabs[0].windowId] = tabs[0].index;
+    
   });
 
-});
+});//Function End
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
   FromOnRemoved = 1;
@@ -354,7 +363,6 @@ function updateActiveTabInfo(tabId) {
 }
 
 function updateActivedTabOnRemoved(windowId, tabId) {
-
   var activeTabRemoved;
   if (
     TabIdsInActivatedOrder[windowId][
@@ -373,9 +381,9 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   }
   FromOnRemoved = 0;
   if (!activeTabRemoved) {
-    chrome.tabs.getSelected(windowId, function(tab) {
-      if (tab == undefined) return;
-      CurrentTabIndex[windowId] = tab.index;
+    chrome.tabs.query({ windowId:moveInfo.windowId  }, function(tabs) {
+      if (tabs[0] == undefined) return;
+      CurrentTabIndex[windowId] = tabs[0].index;
     });
     return;
   }
@@ -403,8 +411,9 @@ if(matchArray != null){
   if (sw == null) sw = localStorage["tabClosingBehavior"];
   switch (sw) {
     case "default":
-      chrome.tabs.getSelected(windowId, function(tab) {
-        updateActiveTabInfo(tab.id);
+      chrome.tabs.query({ active: true, currentWindow: true, windowId:windowId }, function(tabs) {
+
+        updateActiveTabInfo(tabs[0].id);
       });
       break;
     case "first":
@@ -430,42 +439,30 @@ if(matchArray != null){
         updateActiveTabInfo(activateTabId);
       break;
      default:
-      chrome.tabs.getSelected(windowId, function(tab) {
-        updateActiveTabInfo(tab.id);
-      });
       break;
   }
 
 }
 
 function activateTabByIndex(windowId, tabIndex) {
-  chrome.windows.getAll(
-    {
-      populate: true
-    },
-    function(windows) {
-      for (var i = 0; i < windows.length; i++) {
-        if (windows[i].id == windowId) {
-          var tabs = windows[i].tabs;
-          if (tabs.length == 0) {
-            break;
-          }
-          var tab;
-          if (tabs.length - 1 <= tabIndex) {
-            tab = tabs[tabs.length - 1];
-          } else {
-            tab = tabs[tabIndex] || tabs[0];
-          }
-          chrome.tabs.update(tab.id, {
-            selected: true,
-          });
-          updateActiveTabInfo(tab.id);
-          break;
+
+    chrome.tabs.query({ windowId:windowId }, 
+      function(tabs) {
+        var tab;
+        if (tabs.length - 1 <= tabIndex) {
+          tab = tabs[tabs.length - 1];
+        } else {
+          tab = tabs[tabIndex] || tabs[0];
         }
-      }
-    }
-  );
-}
+        chrome.tabs.update(tab.id, {
+          selected: true,
+    });// update
+
+    updateActiveTabInfo(tab.id);
+
+  });// query
+
+}// function
 
 function isExceptionUrl(url, exceptionString) {
   var exceptions = exceptionString.split("\n");
