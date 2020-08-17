@@ -29,6 +29,11 @@ Based on the Tab Position Customizer 2 extension mentioned above.
 
 ## Changelog: 
 
+#### 1.3.1 - 1.3.2 (Pending release)
+- Deprecated callbacks changed.
+- Ui changed.
+- Preformance improvements in the content script.
+
 #### 1.3.0 (Out on chrome store)
 - Reworked option page, moved it into bootstrap design. 
 - Dark Mode added and working. 
