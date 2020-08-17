@@ -1,4 +1,4 @@
-const { FormSelectPlugin } = require("bootstrap-vue");
+const { FormSelectPlugin, BIconTypeUnderline } = require("bootstrap-vue");
 
 var CurrentTabIndex = new Array();
 var TabIdsInActivatedOrder = new Array();
@@ -14,7 +14,6 @@ var ExternalFucusWindowId = -1;
 var ExternalFucusDate = 0;
 var PendingPopup = null;
 var matchArray = null;
-var onRemoved = false;
 
 if (localStorage["foregroundNewTab"] == "true") {
   localStorage["newCreatedTab"] = "foreground";
@@ -190,9 +189,7 @@ chrome.tabs.onActivated.addListener(function(info) {
         FromPopupAttaching = 0;
         return;
       }
-    
       updateActiveTabInfo(info.tabId);
-      
       // if(onRemoved){
       // matchRemove(info.windowId, info.tabId); onRemoved = false;}
    
@@ -218,23 +215,23 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   FromOnRemoved = 1;
    //onRemoved = true; 
-    updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
+     
+   updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
     matchRemove(removeInfo.windowId,tabId);
-    
-  
 });//Function End
 
-chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
+chrome.tabs.onMoved.addListener(function(moveInfo) {
 
     chrome.tabs.query({ windowId:moveInfo.windowId }, function(tabs) {
-    
     CurrentTabIndex[tabs[0].windowId] = tabs[0].index;
+    
     
   });
 
 });//Function End
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
+  
   FromOnRemoved = 1;
    updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
 });
@@ -360,6 +357,7 @@ function updateActiveTabInfo(tabId) {
       TabIdsInActivatedOrder[windowId].push(tabId);
     }
   });
+
 }
 
 function updateActivedTabOnRemoved(windowId, tabId) {
@@ -381,8 +379,8 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   }
   FromOnRemoved = 0;
   if (!activeTabRemoved) {
-    chrome.tabs.query({ windowId:moveInfo.windowId  }, function(tabs) {
-      if (tabs[0] == undefined) return;
+    chrome.tabs.query({ windowId:windowId  }, function(tabs) {
+      if (tabs[0] == undefined) return;  
       CurrentTabIndex[windowId] = tabs[0].index;
     });
     return;
@@ -392,7 +390,6 @@ function updateActivedTabOnRemoved(windowId, tabId) {
     TabSwapMode = 0;
     return;
   } 
-  
 }
 function matchRemove(windowId, tabId){
   var sw = null;
@@ -411,7 +408,7 @@ if(matchArray != null){
   if (sw == null) sw = localStorage["tabClosingBehavior"];
   switch (sw) {
     case "default":
-      chrome.tabs.query({ active: true, currentWindow: true, windowId:windowId }, function(tabs) {
+      chrome.tabs.query({ windowId:windowId }, function(tabs) {
 
         updateActiveTabInfo(tabs[0].id);
       });
@@ -445,7 +442,6 @@ if(matchArray != null){
 }
 
 function activateTabByIndex(windowId, tabIndex) {
-
     chrome.tabs.query({ windowId:windowId }, 
       function(tabs) {
         var tab;
@@ -454,12 +450,12 @@ function activateTabByIndex(windowId, tabIndex) {
         } else {
           tab = tabs[tabIndex] || tabs[0];
         }
+        if(tab == undefined) return;
         chrome.tabs.update(tab.id, {
           selected: true,
     });// update
-
+    if(tab == undefined) return;
     updateActiveTabInfo(tab.id);
-
   });// query
 
 }// function
