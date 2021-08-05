@@ -28,13 +28,17 @@ Can download the zip and load in dev mode. You may also re build the vode with n
 Based on the Tab Position Customizer 2 extension mentioned above. 
 
 ## Changelog: 
-
-#### 1.3.1 - 1.3.2 (Pending release)
+#### 1.3.3 - 1.34 
+- Version 71 fix for those who dident update chrome itself. 
+- When a tab is moved its now reflected in the background list that handles "order" etc. 
+- Preparation for moving to v3 manifest. 
+- 
+#### 1.3.1 - 1.3.2 
 - Deprecated callbacks changed.
 - Ui changed.
 - Preformance improvements in the content script.
 
-#### 1.3.0 (Out on chrome store)
+#### 1.3.0 
 - Reworked option page, moved it into bootstrap design. 
 - Dark Mode added and working. 
 - Many minior style choices, tooltip's added some places. 
