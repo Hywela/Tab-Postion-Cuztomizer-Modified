@@ -14,8 +14,8 @@
       "background.js"
     ]
   },
-  "default_locale": "en",
-  "options_page": "options/options.html",
+  "default_locale":  "en",
+  "options_page":  "options/options.html",
   "permissions": [
     "tabs",
     "storage",
@@ -47,5 +47,5 @@
       },
       "description": "New tab to the right"
     }
-  }
+  } 
 }

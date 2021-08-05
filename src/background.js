@@ -239,17 +239,18 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   
 });//Function End
 
-chrome.tabs.onMoved.addListener(function(moveInfo) {
+//
+chrome.tabs.onMoved.addListener((tabId, moveInfo)=>{
   ChromeWrapper.chromeTabsQuery({ windowId:moveInfo.windowId }, function(tabs) {
   CurrentTabIndex[tabs.windowId] = tabs.index;
-    
-    
+    movedTabChangeByIndex(moveInfo.fromIndex, moveInfo.toIndex, tabId);  
   });
+  //waitForTabLoad(moveInfo.tabId).then(movedTabChangeByIndex(moveInfo.fromIndex,moveInfo.toIndex));
+  
 
 });//Function End
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
-  
   FromOnRemoved = 1;
    updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
 });
@@ -373,6 +374,30 @@ function updateActiveTabInfo(tabId) {
         );
       }
       TabIdsInActivatedOrder[windowId].push(tabId);
+    }
+  });
+
+}
+async function movedTabChangeByIndex(fromIndex, toIndex, tabId) {
+  chrome.tabs.get(tabId, function(tab) {
+    if (tab == undefined) return;
+    var windowId = tab.windowId;
+    CurrentTabIndex[windowId] = tab.index;
+    if (TabIdsInActivatedOrder[windowId] == undefined) {
+      TabIdsInActivatedOrder[windowId] = new Array();
+    }
+    if (
+      TabIdsInActivatedOrder[windowId][
+        TabIdsInActivatedOrder[windowId].length - 1
+      ] != tabId
+    ) {
+      if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
+        var toObject = TabIdsInActivatedOrder[windowId][toIndex];
+        TabIdsInActivatedOrder[windowId][toIndex] = TabIdsInActivatedOrder[windowId][fromIndex];
+        TabIdsInActivatedOrder[windowId][fromIndex] = toObject; 
+        
+      }
+      
     }
   });
 
