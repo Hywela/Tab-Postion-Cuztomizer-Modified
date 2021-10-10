@@ -1,4 +1,7 @@
 const { FormSelectPlugin, BIconTypeUnderline } = require("bootstrap-vue");
+//import Mutex from "await-mutex";
+
+//let mutex = new Mutex();
 
 var CurrentTabIndex = new Array();
 var TabIdsInActivatedOrder = new Array();
@@ -14,6 +17,8 @@ var ExternalFucusWindowId = -1;
 var ExternalFucusDate = 0;
 var PendingPopup = null;
 var matchArray = null;
+var newTabinProcess = false;
+
 
 
 const ChromeWrapper = {
@@ -84,10 +89,12 @@ function waitForTabLoad(loadingTabId) {
 // }
 
 async function doOnCreated(tab) {
-
+  //console.log( tab.index + "DoCrate " + tab.id);
+  newTabinProcess = true;
   if (FromOnRemoved == 1) {
     FromOnRemoved = 0;
     TabSwapMode = 1;
+    //console.log( tab.index + "Return 2 " + tab.id);
     return;
   }
   var windowId;
@@ -106,6 +113,7 @@ async function doOnCreated(tab) {
   }
   PopupWindowId = -1;
   if (TabIdsInActivatedOrder[windowId].length == 0) {
+    //console.log( tab.index + "Return 3 " + tab.id);
     return;
   }
   var sw = null;
@@ -146,13 +154,12 @@ async function doOnCreated(tab) {
     case "default":
       break;
   }
+
   if (index != -1) {
     if (windowId == tab.windowId) {
-      
       chrome.tabs.move(tab.id, {
-        index: index
+        index: index 
       });
-
 
       
     } else {
@@ -162,6 +169,7 @@ async function doOnCreated(tab) {
           windowId: windowId,
           index: index
         };
+        //console.log( tab.index + "Return 4" + tab.id);
         return;
       }
       
@@ -194,27 +202,36 @@ chrome.tabs.onCreated.addListener(function(tab) {
 });
 
 chrome.tabs.onActivated.addListener(function(info) {
+
+    if (FromOnCreated == 1) {
+      FromOnCreated = 0;
+      return;
+    }
+    if (FromOnRemoved == 1) {
+      FromOnRemoved = 0;
+      return;
+    }
+    if (FromPopupAttaching == 1) {
+      FromPopupAttaching = 0;
+      return;
+    }
+
+   updateActiveTabInfo(info.tabId); 
   
-      if (FromOnCreated == 1) {
-        FromOnCreated = 0;
-        return;
-      }
-      if (FromOnRemoved == 1) {
-        FromOnRemoved = 0;
-        return;
-      }
-      if (FromPopupAttaching == 1) {
-        FromPopupAttaching = 0;
-        return;
-      }
-      
-      updateActiveTabInfo(info.tabId);
+
+    //console.log("OnActivated " + info.tabId);
   
-      // if(onRemoved){
-      // matchRemove(info.windowId, info.tabId); onRemoved = false;}
-   
+  // Update ID of currently active tab in the current window
+  
 });
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  if (changeInfo.url) {
+    savedUrls[tabId] = changeInfo.url;
+  }
+});
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+
+
   if (changeInfo.url != null && PendingPopup && tab.id == PendingPopup.tabId) {
     if (!isExceptionUrl(tab.url, localStorage["AlwaysSameWindowException"])) {
       chrome.tabs.move(tab.id, {
@@ -227,31 +244,42 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     } else {
     }
     PendingPopup = null;
+    
   }
-  savedUrls[tabId] = tab.url;
+  
+  //if(changeInfo.status =="complete" ){ console.log(" RUNIN COMPLETE"); updateTabInfo(tabId); }
+  
 });
+
+
+
+
 chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
-  FromOnRemoved = 1;
+  FromOnRemoved = 1; 
    //onRemoved = true; 
+  //console.log("OnRemoved " + tabId + " R " +removeInfo.tabId + " Lock ");
 
    updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
-   matchRemove(removeInfo.windowId,tabId);
+   
   
 });//Function End
 
 //
 chrome.tabs.onMoved.addListener((tabId, moveInfo)=>{
   ChromeWrapper.chromeTabsQuery({ windowId:moveInfo.windowId }, function(tabs) {
-  CurrentTabIndex[tabs.windowId] = tabs.index;
+    CurrentTabIndex[tabs.windowId] = tabs.index;
+  if(!newTabinProcess){
     movedTabChangeByIndex(moveInfo.fromIndex, moveInfo.toIndex, tabId);  
+  }
+  newTabinProcess = false; 
   });
   //waitForTabLoad(moveInfo.tabId).then(movedTabChangeByIndex(moveInfo.fromIndex,moveInfo.toIndex));
-  
 
 });//Function End
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
   FromOnRemoved = 1;
+  //console.log("onDetached " + tabId + " R " +removeInfo.tabId);
    updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
 });
 chrome.windows.onCreated.addListener(function(window) {
@@ -317,6 +345,9 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   }
 });
 function processNewTabActivation(tab, windowId) {
+  //console.log("processNewTabActivation");
+
+//console.log(tab.index + " processNewTabActivation " + tab.id);
   switch (localStorage["newCreatedTab"]) {
     case "foreground":
       chrome.tabs.update(tab.id, {
@@ -354,7 +385,25 @@ function processNewTabActivation(tab, windowId) {
       break;
   }
 }
+
+function updateIndex(tabId){
+  //console.log("Update " + tabId)
+  if(tabId && localStorage["tabClosingBehavior"] != "default"){
+  chrome.tabs.get(tabId, function(tab) {
+    if (tab == undefined) return;
+    var windowId = tab.windowId;
+    CurrentTabIndex[windowId] = tab.index;
+    chrome.tabs.update(tabId, {
+      selected: true
+    });
+    
+  });
+}
+}
+
 function updateActiveTabInfo(tabId) {
+
+//console.log("updateActiveTabInfo " + tabId);
   chrome.tabs.get(tabId, function(tab) {
     if (tab == undefined) return;
     var windowId = tab.windowId;
@@ -368,12 +417,9 @@ function updateActiveTabInfo(tabId) {
       ] != tabId
     ) {
       if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
-        TabIdsInActivatedOrder[windowId].splice(
-          TabIdsInActivatedOrder[windowId].indexOf(tabId),
-          1
-        );
+        splice(tabId, windowId);
       }
-      TabIdsInActivatedOrder[windowId].push(tabId);
+      push(tabId, windowId);
     }
   });
 
@@ -391,20 +437,23 @@ async function movedTabChangeByIndex(fromIndex, toIndex, tabId) {
         TabIdsInActivatedOrder[windowId].length - 1
       ] != tabId
     ) {
-      if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
+      if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) { async() =>{
+       // let unlock = await mutex.lock(); // wait until mutex is unlocked
         var toObject = TabIdsInActivatedOrder[windowId][toIndex];
         TabIdsInActivatedOrder[windowId][toIndex] = TabIdsInActivatedOrder[windowId][fromIndex];
         TabIdsInActivatedOrder[windowId][fromIndex] = toObject; 
-        
+    //console.log("Spliced " + tabId);
+   // unlock(); 
+          
       }
-      
+      }      
     }
   });
 
 }
 
 function updateActivedTabOnRemoved(windowId, tabId) {
-  var activeTabRemoved;
+  var activeTabRemoved; 
   if (
     TabIdsInActivatedOrder[windowId][
       TabIdsInActivatedOrder[windowId].length - 1
@@ -412,28 +461,52 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   ) {
     activeTabRemoved = true;
   } else {
-    activeTabRemoved = false;
+    activeTabRemoved = false; 
   }
+  //console.log("updateActivedTabOnRemoved " + activeTabRemoved + "  " + tabId);
   if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
-    TabIdsInActivatedOrder[windowId].splice(
-      TabIdsInActivatedOrder[windowId].indexOf(tabId),
-      1
-    );
+   splice(tabId,windowId);
+  }else {
+
   }
-  FromOnRemoved = 0;
-  if (!activeTabRemoved) {
+
+  if (!activeTabRemoved ) {
     ChromeWrapper.chromeTabsQuery({ windowId:windowId  }, function(tabs) {
-      if (tabs[0] == undefined) return;  
-      CurrentTabIndex[windowId] = tabs[0].index;
+      if (tabs == undefined) { return;  }
+      //console.log("TEST" + CurrentTabIndex[tabs.windowId] + " tabId " + tabId) + " index " + tabs.index;
+      //CurrentTabIndex[windowId] = tabs.index;
+      updateIndex(TabIdsInActivatedOrder[windowId][
+        TabIdsInActivatedOrder[windowId].length - 1]);
+        FromOnRemoved = 0;
     });
-    return;
-  }
+  }else matchRemove(windowId,tabId);
 
    if (TabSwapMode == 1) {
     TabSwapMode = 0;
     return;
   } 
+  
+  
 }
+async function splice(tabId, windowId) {
+
+  //let unlock = await mutex.lock(); // wait until mutex is unlocked
+  TabIdsInActivatedOrder[windowId].splice(
+    TabIdsInActivatedOrder[windowId].indexOf(tabId),
+    1 );
+    //console.log("Spliced " + tabId);
+  //  unlock(); 
+ 
+}
+async function push(tabId, windowId) {
+
+  //let unlock = await mutex.lock(); // wait until mutex is unlocked
+  TabIdsInActivatedOrder[windowId].push(tabId);
+    //console.log("Push " + tabId);
+  //  unlock(); 
+ 
+}
+
 function matchRemove(windowId, tabId){
   var sw = null;
   // Handle errors and match of closing
@@ -453,30 +526,30 @@ if(matchArray != null){
     case "default":
       ChromeWrapper.chromeTabsQuery({ windowId:windowId }, function(tabs) {
 
-        updateActiveTabInfo(tabs[0].id);
+       // updateActiveTabInfo(tabs[0].id);
       });
       break;
     case "first":
-      activateTabByIndex(windowId, 0); 
+      activateTabByIndex(windowId, 0); FromOnRemoved = 0;
       break;
     case "last":
-      activateTabByIndex(windowId, 9999); 
+      activateTabByIndex(windowId, 9999); FromOnRemoved = 0;
       break;
     case "right":
-      activateTabByIndex(windowId, CurrentTabIndex[windowId]);
+      activateTabByIndex(windowId, CurrentTabIndex[windowId]); FromOnRemoved = 0;
       break;
     case "left":
-      activateTabByIndex(windowId, CurrentTabIndex[windowId] - 1);
+        activateTabByIndex(windowId, CurrentTabIndex[windowId] - 1);  FromOnRemoved = 0;
       break;
     case "order":
       var activateTabId =
         TabIdsInActivatedOrder[windowId][
-          TabIdsInActivatedOrder[windowId].length - 1
-        ];
-        chrome.tabs.update(activateTabId, {
-          selected: true
-        });
-        updateActiveTabInfo(activateTabId);
+          TabIdsInActivatedOrder[windowId].length - 1];
+       
+       //console.log(" ID order " + activateTabId);
+       updateIndex(activateTabId);
+       //CurrentTabIndex[windowId] = activateTabId;
+       
       break;
      default:
       break;
@@ -485,6 +558,12 @@ if(matchArray != null){
 }
 
 function activateTabByIndex(windowId, tabIndex) {
+  //console.log(" activateTabByIndex");
+  if(TabIdsInActivatedOrder[windowId][
+    TabIdsInActivatedOrder[windowId].length - 1] != -1){
+//console.log(" activateTabByIndex - IF");
+
+    }
   ChromeWrapper.chromeTabsQuery({ windowId:windowId }, 
       function(tabs) {
         var tab;
@@ -493,11 +572,11 @@ function activateTabByIndex(windowId, tabIndex) {
         } else {
           tab = tabs[tabIndex] || tabs[0];
         }
-        if(tab == undefined) return;
+        if(tab == undefined) { return;}
         chrome.tabs.update(tab.id, {
           selected: true,
     });// update
-    if(tab == undefined) return;
+    if(tab == undefined) { return; }
     updateActiveTabInfo(tab.id);
   });// query
 
