@@ -80,7 +80,10 @@
      "value": "foreground"
   }
 },
-
+"menuButton": {
+   "description": "Context menu button.",
+   "message": "Show conext menu"
+},
 
   "open": {
      "description": "Option category name for tab opening.",

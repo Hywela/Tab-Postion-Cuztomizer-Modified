@@ -105,10 +105,12 @@ async function doOnCreated(tab) {
     ActiveWindowId > 0 &&
     !isExceptionUrl(tab.url, localStorage["AlwaysSameWindowException"])
   ) {
+    //console.log("testing if ");
     windowId = ActiveWindowId;
     TabIdsInActivatedOrder[tab.windowId].push(tab.id);
     index = CurrentTabIndex[windowId] + 1;
   } else {
+    //console.log("testing else");
     windowId = tab.windowId;
   }
   PopupWindowId = -1;
@@ -161,7 +163,7 @@ async function doOnCreated(tab) {
         index: index 
       });
 
-      
+      //console.log("running 1");
     } else {
       if (tab.url == "") {
         PendingPopup = {
@@ -172,7 +174,7 @@ async function doOnCreated(tab) {
         //console.log( tab.index + "Return 4" + tab.id);
         return;
       }
-      
+      //console.log("running 2");
       chrome.tabs.move(tab.id, {
         windowId: windowId,
         index: index
@@ -346,7 +348,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
 });
 function processNewTabActivation(tab, windowId) {
   //console.log("processNewTabActivation");
-
+  //console.log("processNewTabActivation   " + localStorage["newCreatedTab"]);
 //console.log(tab.index + " processNewTabActivation " + tab.id);
   switch (localStorage["newCreatedTab"]) {
     case "foreground":
@@ -358,23 +360,29 @@ function processNewTabActivation(tab, windowId) {
       if (tab.url.match(/^chrome/)) {
         break;
       }
+     // updateActiveTabInfo(tab.id);
       var activateTabId =
         TabIdsInActivatedOrder[windowId][
           TabIdsInActivatedOrder[windowId].length - 1
-        ];
+        ]; 
       if (activateTabId == undefined) {
+        //console.log("activateTabId == undefined");
         break;
       }
-      FromOnCreated = 1;
-      chrome.tabs.update(
-        activateTabId,
-        {
-          selected: true
-        },
-        function(tab) {
-          FromOnCreated = 0;
-        }
-      );
+      //console.log("activateTabId  "+ activateTabId);
+      if(activateTabId){
+        chrome.tabs.get(activateTabId, function(tab) {
+          if (tab == undefined) return;
+          var windowId = tab.windowId;
+          CurrentTabIndex[windowId] = tab.index;
+          chrome.tabs.update(activateTabId, {
+            selected: true
+          });
+        
+       });
+
+       
+      }
       break;
     default:
       if (PendingPopup && tab.id == PendingPopup.tabId) {
@@ -387,7 +395,7 @@ function processNewTabActivation(tab, windowId) {
 }
 
 function updateIndex(tabId){
-  //console.log("Update " + tabId)
+  //console.log("Update " + tabId) && localStorage["tabClosingBehavior"] != "default"
   if(tabId && localStorage["tabClosingBehavior"] != "default"){
   chrome.tabs.get(tabId, function(tab) {
     if (tab == undefined) return;
@@ -398,9 +406,12 @@ function updateIndex(tabId){
     });
     
   });
-}
-}
+}else{
 
+  
+  
+}
+}
 function updateActiveTabInfo(tabId) {
 
 //console.log("updateActiveTabInfo " + tabId);
@@ -467,7 +478,7 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
    splice(tabId,windowId);
   }else {
-
+       
   }
 
   if (!activeTabRemoved ) {
@@ -523,12 +534,6 @@ if(matchArray != null){
 }
   if (sw == null) sw = localStorage["tabClosingBehavior"];
   switch (sw) {
-    case "default":
-      ChromeWrapper.chromeTabsQuery({ windowId:windowId }, function(tabs) {
-
-       // updateActiveTabInfo(tabs[0].id);
-      });
-      break;
     case "first":
       activateTabByIndex(windowId, 0); FromOnRemoved = 0;
       break;
@@ -552,6 +557,8 @@ if(matchArray != null){
        
       break;
      default:
+       //console.log("running?");
+      updateIndex(activateTabId); FromOnRemoved = 0;
       break;
   }
 
@@ -606,12 +613,15 @@ function lastTab(info,tab) {
       updateActiveTabInfo(activateTabId);
   }
   
-      chrome.contextMenus.create({
-        title: "Last Tab", 
-        contexts:["page"], 
-        onclick: lastTab
-      });
 
+
+  if (localStorage["button_last_tab"] == "true") {
+    chrome.contextMenus.create({
+      title: "Last Tab", 
+      contexts:["page"], 
+      onclick: lastTab
+    });
+  }
       /*
       chrome.commands.onCommand.addListener( function(command) {
 

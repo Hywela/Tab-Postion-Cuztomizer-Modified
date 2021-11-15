@@ -116,6 +116,27 @@
 
           </div>
         </div>
+          <div class="row">
+          <div class="col">
+           
+            <div class="section-header">
+              <h6 class="text-dark">{{ $t('menuButton').message }}</h6>
+            </div>
+
+                <b-form-group>
+                  <b-form-radio-group class="text-dark"
+                    buttons
+                    :button-variant="'outline-'+darkModevariant"
+                    v-model="selectButton"
+                    :options="optionsButton"
+                    @change.native="saveTolocalstorage('button_last_tab',selectButton)"
+                    name="buttonRadio"
+                  ></b-form-radio-group>
+                  <p>*Will take effect after a reload of the extension </p>
+                </b-form-group>
+
+          </div>
+        </div>
         <div class="row" hidden>
           <div class="col">
             
@@ -254,6 +275,19 @@ export default {
            }
 
         ],
+        selectedNew: localStorage['button_last_tab'],
+        optionsButton: [
+          { 
+           text:"Yes",
+           value: true,
+           },
+                     { 
+           text:"No",
+           value: false,
+           },
+ 
+
+        ],
         selectedOpen: localStorage['tabOpeningPosition'],
         optionsOpen: [
           { 
@@ -365,6 +399,20 @@ export default {
           value: this.$t('match_option').default.value
         }  
       ],
+        button_last_tab: [
+          {
+          text: "Show context menu button",
+          value: null
+        },
+        {
+          text: "Yes",
+          value: true
+        },
+        {
+          text: "NO",
+          value: false
+        },
+      ],
       match: "",
       list: [],
       darkModevariant:"dark",
@@ -383,7 +431,7 @@ export default {
       if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
       if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
       if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
-
+      if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
        
 
       var self = [];
@@ -447,7 +495,8 @@ export default {
       if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
       if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
       if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
- 
+      if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
+       
       if(localStorage['darkMode'] == 'true') this.darkMode = true; else this.darkMode = false;
       
       this.darkModeSwitch();
