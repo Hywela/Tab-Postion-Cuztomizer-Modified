@@ -127,7 +127,7 @@ async function doOnCreated(tab) {
 
 
   // Handle errors
-
+let openingType = null;
   if (matchArray != null) {
     for (var i = 0; i < matchArray.length; i++) {
       if (
@@ -135,6 +135,7 @@ async function doOnCreated(tab) {
         tab.pendingUrl.indexOf(matchArray[i].name) != -1
       ) {
         sw = matchArray[i].value;
+        openingType = matchArray[i].openingType;
       }
     }
   }
@@ -192,7 +193,8 @@ async function doOnCreated(tab) {
       );
     }
   }
-  processNewTabActivation(tab, windowId);
+  
+  processNewTabActivation(tab, windowId, openingType);
 }
 
 chrome.tabs.onCreated.addListener(function(tab) {
@@ -242,7 +244,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
       });
       if(savedUrls[tabId] != null)
       savedUrls[tabId] = tab.url;
-      processNewTabActivation(tab, PendingPopup.windowId);
+      processNewTabActivation(tab, PendingPopup.windowId, null);
     } else {
     }
     PendingPopup = null;
@@ -346,11 +348,14 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
     });
   }
 });
-function processNewTabActivation(tab, windowId) {
+function processNewTabActivation(tab, windowId, openingType) {
   //console.log("processNewTabActivation");
   //console.log("processNewTabActivation   " + localStorage["newCreatedTab"]);
 //console.log(tab.index + " processNewTabActivation " + tab.id);
-  switch (localStorage["newCreatedTab"]) {
+
+if(openingType == null) openingType = localStorage["newCreatedTab"];
+
+  switch (openingType) {
     case "foreground":
       chrome.tabs.update(tab.id, {
         selected: true

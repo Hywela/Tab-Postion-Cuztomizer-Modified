@@ -189,5 +189,20 @@
      "value": "closing",
      "message": "Closing"
   }
-  }
+  },
+  "fg_match_option":{
+   "message": "",
+ "default": {
+    "value": "default",
+    "message": "Default"
+ },
+ "forground": {
+    "value": "foreground",
+    "message": "Foreground"
+ },
+ "background": {
+    "value": "background",
+    "message": "Background"
+ }
+ }
 }

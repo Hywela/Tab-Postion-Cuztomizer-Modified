@@ -50,6 +50,10 @@
                   v-model="closing_position"
                   :options="closing_positions"
                 ></b-form-select>
+                <b-form-select class ="" v-bind:class="{ 'bg-dark text-dark' : darkMode }"
+                  v-model="for_back_position"
+                  :options="for_back_positions"
+                ></b-form-select>
               </b-input-group-append>
               <b-input-group-append>
                 <b-button  :variant="dark_mode_radio"   @click="addToList()"
@@ -341,6 +345,7 @@ export default {
       msg: "",
       position: null,
       closing_position: null, 
+      for_back_position: null, 
       expand_text_list: false,
       darkMode: false,
       positions: [
@@ -398,6 +403,20 @@ export default {
           text: this.$t('match_option').default.message,
           value: this.$t('match_option').default.value
         }  
+      ],
+for_back_positions: [
+        {
+          text: this.$t('fg_match_option').default.message,
+          value: null
+        },
+        {
+          text: this.$t('fg_match_option').forground.message,
+          value: this.$t('fg_match_option').forground.value
+        },
+        {
+          text: this.$t('fg_match_option').background.message,
+          value: this.$t('fg_match_option').background.value
+        },  
       ],
         button_last_tab: [
           {
@@ -481,7 +500,7 @@ export default {
         this.msg = this.$t('wrong_input_03').message;
       } else {
         this.msg = this.$t('sucess').message;
-        this.list.push({ name: this.match, value: this.position, closing:this.closing_position });
+        this.list.push({ name: this.match, value: this.position, closing:this.closing_position, openingType: this.for_back_position });
       }
     },
     removeFromList(index) {
