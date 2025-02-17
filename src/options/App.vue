@@ -10,7 +10,7 @@
             <b-form-checkbox 
               v-model="darkMode"
               id="darkMode"
-              @change.native="darkModeSwitch()"
+              @change.native="darkModeSwitch(darkMode)"
               switch
             >
             <b-icon icon="moon"  variant="primary" aria-hidden="true"></b-icon>
@@ -75,7 +75,7 @@
                     :button-variant="'outline-'+darkModevariant"
                     v-model="selectedOpen"
                     :options="optionsOpen"
-                    @change.native="saveTolocalstorage('tabOpeningPosition',selectedOpen)"
+                    @change.native="saveSetting('tabOpeningPosition',selectedOpen)"
                     name="openRadio"
                     
                   ></b-form-radio-group>
@@ -94,7 +94,7 @@
                     :button-variant="'outline-'+darkModevariant"
                     v-model="selectedClose"
                     :options="optionsClose"
-                    @change.native="saveTolocalstorage('tabClosingBehavior',selectedClose)"
+                    @change.native="saveSetting('tabClosingBehavior',selectedClose)"
                     name="closeRadio"
                   ></b-form-radio-group>
                 </b-form-group>
@@ -113,7 +113,7 @@
                     :button-variant="'outline-'+darkModevariant"
                     v-model="selectedNew"
                     :options="optionsNew"
-                    @change.native="saveTolocalstorage('newCreatedTab',selectedNew)"
+                    @change.native="saveSetting('newCreatedTab',selectedNew)"
                     name="newRadio"
                   ></b-form-radio-group>
                 </b-form-group>
@@ -133,7 +133,7 @@
                     :button-variant="'outline-'+darkModevariant"
                     v-model="selectButton"
                     :options="optionsButton"
-                    @change.native="saveTolocalstorage('button_last_tab',selectButton)"
+                    @change.native="saveSetting('button_last_tab',selectButton)"
                     name="buttonRadio"
                   ></b-form-radio-group>
                   <p>*Will take effect after a reload of the extension </p>
@@ -263,6 +263,7 @@
 export default {
   data() {
     return {
+      darkMode: false,
         selectedNew: localStorage['newCreatedTab'],
         optionsNew: [
           { 
@@ -347,7 +348,6 @@ export default {
       closing_position: null, 
       for_back_position: null, 
       expand_text_list: false,
-      darkMode: false,
       positions: [
         {
           text: this.$t('match_option').opening.message,
@@ -444,8 +444,23 @@ for_back_positions: [
   updated: function() {
     chrome.storage.sync.set({ list: this.list}, function() {});
     // this.init();
+    //this.loadSettings();
+  },
+  mounted() {
+ 
   },
   methods: {
+    loadSettings() {
+      chrome.storage.sync.get(["darkMode", "tabOpeningPosition", "tabClosingBehavior", "newCreatedTab", "button_last_tab"], (data) => {
+        if (data.darkMode !== undefined) this.darkModeSwitch(data.darkMode); 
+        if (data.tabOpeningPosition) this.selectedOpen = data.tabOpeningPosition;
+        if (data.tabClosingBehavior) this.selectedClose = data.tabClosingBehavior;
+        if (data.newCreatedTab) this.selectedNew = data.newCreatedTab;
+        if (data.button_last_tab) this.selectButton = data.button_last_tab;
+      });
+
+
+    },
     init: async function() {
       if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
       if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
@@ -461,7 +476,7 @@ for_back_positions: [
     
       
    
-      this.darkModeSwitch();
+
     },
     getLocalization( behavior , type){
 
@@ -480,13 +495,17 @@ for_back_positions: [
             return this.$t(behavior).default.message; 
         }
     },
-    darkModeSwitch(){
-      
+    darkModeSwitch(status){
       if(this.darkMode) {this.darkModevariant = 'secondary'; this.dark_mode_radio = "outline-light text-dark";} else {this.darkModevariant = 'dark'; this.dark_mode_radio = "outline-dark";}
-      this.saveDarkMode();
+      this.darkMode = status;
+      console.log(this.darkMode, status)
+      this.saveSetting("darkMode", status);
     },
-    saveDarkMode(){
-      localStorage['darkMode'] = this.darkMode;
+    saveSetting(key, value) {
+      let obj = {};
+      obj[key] = value;
+      chrome.storage.sync.set(obj);
+      console.log("chrome.storage.sync",key, value );
     },
     saveTolocalstorage(storage, input){
       localStorage[storage]  = input;
@@ -510,17 +529,12 @@ for_back_positions: [
       this.expand_text_list =! this.expand_text_list;
     },
     async restore(vm) {
-      
+      this.loadSettings();
       if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
       if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
       if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
       if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
        
-      if(localStorage['darkMode'] == 'true') this.darkMode = true; else this.darkMode = false;
-      
-      this.darkModeSwitch();
-        
-      
 
       chrome.storage.sync.get("list", function(storageData) {
         if (storageData.list != null) {

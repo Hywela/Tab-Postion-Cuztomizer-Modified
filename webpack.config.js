@@ -10,8 +10,11 @@ const config = {
   mode: process.env.NODE_ENV,
   context: __dirname + '/src',
   entry: {
-    'background': './background.js',
-    'options/options': './options/options.js',
+  'service_worker': './service_worker.js',  // Ensure correct file name
+  'options/options': './options/options.js',
+  },
+  optimization: {
+    minimize: false, // Disable minification for service workers
   },
   output: {
     path: __dirname + '/dist',
@@ -83,11 +86,13 @@ const config = {
         transform: (content) => {
           const jsonContent = JSON.parse(content);
           jsonContent.version = version;
-
-          if (config.mode === 'development') {
-            jsonContent['content_security_policy'] = "script-src 'self' 'unsafe-eval'; object-src 'self'";
-          }
-
+          jsonContent["background"] = {
+            "service_worker": "service_worker.js",
+            "type": "module"
+          };
+          jsonContent["content_security_policy"] = {
+            "extension_pages": "script-src 'self'; object-src 'self'"
+          };
           return JSON.stringify(jsonContent, null, 2);
         },
       },
