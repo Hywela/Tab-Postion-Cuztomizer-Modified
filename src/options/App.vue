@@ -316,7 +316,7 @@ export default {
            value: this.$t('open').right.value,
            }
         ],
-        selectedClose: localStorage['tabClosingBehavior'],
+        selectedClose: "default",
         optionsClose: [
           { 
            text: this.$t('match_option').first.message,
@@ -462,10 +462,10 @@ for_back_positions: [
 
     },
     init: async function() {
-      if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
-      if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
-      if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
-      if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
+    //  if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
+   //   if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
+    //  if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
+    //  if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
        
 
       var self = [];
@@ -530,10 +530,10 @@ for_back_positions: [
     },
     async restore(vm) {
       this.loadSettings();
-      if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
-      if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
-      if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
-      if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
+      //if(localStorage['tabOpeningPosition'] == null) this.selectedOpen = localStorage['tabOpeningPosition'] = 'default'; else this.selectedOpen = localStorage['tabOpeningPosition']
+      //if(localStorage['tabClosingBehavior'] == null) this.selectedClose = localStorage['tabClosingBehavior'] = 'default'; else this.selectedClose = localStorage['tabClosingBehavior']
+      //if(localStorage['newCreatedTab'] == null) this.selectedNew = localStorage['newCreatedTab'] = 'default'; else this.selectedNew = localStorage['newCreatedTab']
+      //if(localStorage['button_last_tab'] == null) this.selectButton = localStorage['button_last_tab'] = 'true'; else this.selectButton = localStorage['button_last_tab']
        
 
       chrome.storage.sync.get("list", function(storageData) {
