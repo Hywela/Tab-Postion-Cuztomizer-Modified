@@ -2,7 +2,7 @@
   "name": "Tab Position Customizer - Modified",
   "short_name": "Tab Position",
   "description": "A extension for position of tabs",
-  "version": "1.3.3",
+  "version": "1.4.4",
   "manifest_version": 3,
   "icons": {
     "48": "icons/icon_48.png",
@@ -20,9 +20,7 @@
   "options_page":  "options/options.html",
   "permissions": [
     "tabs",
-    "storage",
-    "webNavigation",
-    "contextMenus"
+    "storage"
   ],
   "commands": {
     "new_tab": {

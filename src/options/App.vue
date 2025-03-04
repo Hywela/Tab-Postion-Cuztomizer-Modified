@@ -451,12 +451,12 @@ for_back_positions: [
   },
   methods: {
     loadSettings() {
-      chrome.storage.sync.get(["darkMode", "tabOpeningPosition", "tabClosingBehavior", "newCreatedTab", "button_last_tab"], (data) => {
+      chrome.storage.sync.get(["darkMode", "tabOpeningPosition", "tabClosingBehavior", "newCreatedTab", "button_last_tab", ], (data) => {
         if (data.darkMode !== undefined) this.darkModeSwitch(data.darkMode); 
-        if (data.tabOpeningPosition) this.selectedOpen = data.tabOpeningPosition;
-        if (data.tabClosingBehavior) this.selectedClose = data.tabClosingBehavior;
-        if (data.newCreatedTab) this.selectedNew = data.newCreatedTab;
-        if (data.button_last_tab) this.selectButton = data.button_last_tab;
+        if (data.tabOpeningPosition){ this.selectedOpen = data.tabOpeningPosition; }else{  this.selectedOpen ='default'; this.saveSetting('tabOpeningPosition','default') }
+        if (data.tabClosingBehavior){ this.selectedClose = data.tabClosingBehavior; }else{  this.selectedClose ='default'; this.saveSetting('tabClosingBehavior','default') }
+        if (data.newCreatedTab){ this.selectedNew = data.newCreatedTab; }else{  this.selectedNew ='default'; this.saveSetting('newCreatedTab','default') }
+        if (data.button_last_tab){ this.selectButton = data.button_last_tab; }else{ this.selectButton ='false'; this.saveSetting('button_last_tab','false') }
       });
 
 
@@ -498,14 +498,14 @@ for_back_positions: [
     darkModeSwitch(status){
       if(this.darkMode) {this.darkModevariant = 'secondary'; this.dark_mode_radio = "outline-light text-dark";} else {this.darkModevariant = 'dark'; this.dark_mode_radio = "outline-dark";}
       this.darkMode = status;
-      console.log(this.darkMode, status)
+      //console.log(this.darkMode, status)
       this.saveSetting("darkMode", status);
     },
     saveSetting(key, value) {
       let obj = {};
       obj[key] = value;
       chrome.storage.sync.set(obj);
-      console.log("chrome.storage.sync",key, value );
+      //console.log("chrome.storage.sync",key, value );
     },
     saveTolocalstorage(storage, input){
       localStorage[storage]  = input;
