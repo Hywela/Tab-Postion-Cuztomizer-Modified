@@ -264,7 +264,7 @@ export default {
   data() {
     return {
       darkMode: false,
-        selectedNew: localStorage['newCreatedTab'],
+        selectedNew: this.getLocalstorage['newCreatedTab'],
         optionsNew: [
           { 
            text: this.$t('new').background.message,
@@ -280,7 +280,7 @@ export default {
            }
 
         ],
-        selectedNew: localStorage['button_last_tab'],
+        selectedNew: this.getLocalstorage['button_last_tab'],
         optionsButton: [
           { 
            text:"Yes",
@@ -293,7 +293,7 @@ export default {
  
 
         ],
-        selectedOpen: localStorage['tabOpeningPosition'],
+        selectedOpen: this.getLocalstorage['tabOpeningPosition'],
         optionsOpen: [
           { 
            text: this.$t('open').first.message,
@@ -508,8 +508,25 @@ for_back_positions: [
       //console.log("chrome.storage.sync",key, value );
     },
     saveTolocalstorage(storage, input){
-      localStorage[storage]  = input;
+      let obj = {};
+      obj[storage] = input;
+      chrome.storage.local.set({ obj }).then(() => {
+    });
     },
+ getLocalstorage(storage){
+  return new Promise((resolve) => {
+    chrome.storage.local.get([storage], (result) => {
+      if (chrome.runtime.lastError) {
+        console.error("Storage Error:", chrome.runtime.lastError);
+        resolve(null);
+      } else {
+        resolve(result[storage] || null); // Return null if key does not exist
+      }
+    });
+  });
+},
+
+
     addToList() {
       if (this.match.length <= 0) {
         this.msg = this.$t('wrong_input_01').message;

@@ -14,8 +14,35 @@ var PendingPopup = null;
 var matchArray = null;
 var newTabInProcess = false;
 let storageData = null;
-
+var alwaysSameWindow = true;
 loadStorage();
+var DEBUG = true;
+if(!DEBUG){
+   
+    var methods = ["log", "debug", "warn", "info"];
+    for(var i=0;i<methods.length;i++){
+        console[methods[i]] = function(){};
+    }
+}
+
+async function saveTolocalstorage(storage, input){
+  let obj = {};
+  obj[storage] = input;
+   await chrome.storage.local.set({ obj }).then(() => {
+});
+}
+async function getLocalstorage(storage){
+  return new Promise((resolve) => {
+    chrome.storage.local.get([storage], (result) => {
+      if (chrome.runtime.lastError) {
+        console.error("Storage Error:", chrome.runtime.lastError);
+        resolve(null);
+      } else {
+        resolve(result[storage] || null); // Return null if key does not exist
+      }
+    });
+  });
+}
 
 // Listen for storage changes and update only the relevant keys
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -26,18 +53,20 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+
 async function loadStorage(){
-   storageData = await chrome.storage.sync.get([
+  alwaysSameWindow = (await getLocalstorage("AlwaysSameWindow")) || false; // Default to false if missing
+  console.log(alwaysSameWindow, "TESTING");
+  storageData = await chrome.storage.sync.get([
     "AlwaysSameWindow", "AlwaysSameWindowException",
-    "tabOpeningPosition", "tabClosingBehavior","list", "newCreatedTab", "button_last_tab",
+    "tabOpeningPosition", "tabClosingBehavior", "list", "newCreatedTab", "button_last_tab",
   ]);
 
-  if (storageData.foregroundNewTab == "true") {
+  if (storageData.foregroundNewTab === "true") {
     storageData.newCreatedTab = "foreground";
   }
   storageData.foregroundNewTab = undefined;
-};
-
+}
 const ChromeWrapper = {
   chromeTabsQuery: function (params, callback) {
     chrome.tabs.query(params, tabs => {
@@ -59,19 +88,22 @@ chrome.windows.getAll(
   {
     populate: false
   },
-  function(windows) {
+  async function(windows) { // Make function async
+    await loadStorage(); // Ensure storage is loaded before proceeding
+
     for (var i = 0; i < windows.length; i++) {
       var windowId = windows[i].id;
       TabIdsInActivatedOrder[windowId] = new Array();
       if (windows[i].focused) {
         ActiveWindowId = windowId;
       }
-      
-      ChromeWrapper.chromeTabsQuery({ windowId:windowId }, function(tabs) {
-        CurrentTabIndex[tabs[0].windowId] = tabs[0].index;
-        TabIdsInActivatedOrder[tabs[0].windowId].push(tabs[0].id);
+
+      ChromeWrapper.chromeTabsQuery({ windowId: windowId }, function(tabs) {
+        if (tabs.length > 0) {
+          CurrentTabIndex[tabs[0].windowId] = tabs[0].index;
+          push(tabs[0].id, tabs[0].groupId || -1, tabs[0].windowId);
+        }
       });
-     loadStorage();
     }
   }
 );
@@ -79,10 +111,12 @@ chrome.windows.getAll(
 function waitForTabLoad(loadingTabId) {
   return new Promise(function(resolve) {
     chrome.tabs.onUpdated.addListener(function _listener(tabId, info, tab) {
+      console.log(info, tab, "waitForTabLoad");
       if (loadingTabId == tabId && tab.status == "complete") {  
-        savedUrls[tabId] = tab.url;  
-        chrome.tabs.onUpdated.removeListener(_listener);
-        resolve();
+          //tab.index = doOnCreated(tab);          
+          savedUrls[tabId] = tab.url;  
+          chrome.tabs.onUpdated.removeListener(_listener);
+          resolve();       
       }
     });
   });
@@ -101,95 +135,130 @@ function waitForTabLoad(loadingTabId) {
 // }
 
 async function doOnCreated(tab) {
+   //console.log( tab.index + "DoCrate " + tab.id);
+   newTabInProcess = true;
+   if (FromOnRemoved == 1) {
+     FromOnRemoved = 0;
+     TabSwapMode = 1;
+     //console.log( tab.index + "Return 2 " + tab.id);
+     return;
+   }
+   var windowId;
+   var index = -1;
+   if (
+     storageData.AlwaysSameWindow == "true" &&
+     tab.windowId == PopupWindowId &&
+     ActiveWindowId > 0 &&
+     !isExceptionUrl(tab.url, storageData.AlwaysSameWindowException)
+   ) {
+     //console.log("testing if ");
+     windowId = ActiveWindowId;
+     TabIdsInActivatedOrder[tab.windowId].push(tab.id);
+     index = CurrentTabIndex[windowId] + 1;
+   } else {
+     //console.log("testing else");
+     windowId = tab.windowId;
+   }
+   PopupWindowId = -1;
+   if (TabIdsInActivatedOrder[windowId]) {
+   if (TabIdsInActivatedOrder[windowId].length == 0) {
+     //console.log( tab.index + "Return 3 " + tab.id);
+     return;
+   } }
+   var sw = null;
+     matchArray = storageData.list;
  
+   // Handle errors
+ let openingType = null;
+   if (matchArray != null) {
+     for (var i = 0; i < matchArray.length; i++) {
+       if (
+         tab.url.indexOf(matchArray[i].name) != -1 ||
+         tab.pendingUrl.indexOf(matchArray[i].name) != -1
+       ) {
+         sw = matchArray[i].value;
+         openingType = matchArray[i].openingType;
+       }
+     }
+   }
+   if (!sw) sw =  storageData.tabOpeningPosition;
+   switch (sw) {
+     case "first":
+       index = 0;
+       break;
+     case "last":
+       index = 9999;
+       break;
+     case "right":
+       index = CurrentTabIndex[windowId]+1;
+       break;
+     case "left":
+       index = CurrentTabIndex[windowId];
+       break;
+     case "default":
+      index = null;
+       break;
+   }
 
-  //console.log( tab.index + "DoCrate " + tab.id);
-  newTabInProcess = true;
-  if (FromOnRemoved == 1) {
-    FromOnRemoved = 0;
-    TabSwapMode = 1;
-    //console.log( tab.index + "Return 2 " + tab.id);
+  return index;
+}
+let creatingNewTab = false; // Prevent infinite loop
+let deletedTabDone = true; // Prevent infinite loop
+
+chrome.tabs.onCreated.addListener(async function(tab) {
+  if (creatingNewTab) {
+    console.warn("Prevented infinite tab creation loop.");
     return;
   }
-  var windowId;
-  var index = -1;
-  if (
-    storageData.AlwaysSameWindow == "true" &&
-    tab.windowId == PopupWindowId &&
-    ActiveWindowId > 0 &&
-    !isExceptionUrl(tab.url, storageData.AlwaysSameWindowException)
-  ) {
-    //console.log("testing if ");
-    windowId = ActiveWindowId;
-    TabIdsInActivatedOrder[tab.windowId].push(tab.id);
-    index = CurrentTabIndex[windowId] + 1;
-  } else {
-    //console.log("testing else");
-    windowId = tab.windowId;
-  }
-  PopupWindowId = -1;
-  if (TabIdsInActivatedOrder[windowId].length == 0) {
-    //console.log( tab.index + "Return 3 " + tab.id);
-    return;
-  }
-  var sw = null;
-    matchArray = storageData.list;
+  ChromeWrapper.chromeTabsQuery({ active: true, currentWindow: true }, async function(tabs) {
+    if (tabs.length === 0) return;
 
-  // Handle errors
-let openingType = null;
-  if (matchArray != null) {
-    for (var i = 0; i < matchArray.length; i++) {
-      if (
-        tab.url.indexOf(matchArray[i].name) != -1 ||
-        tab.pendingUrl.indexOf(matchArray[i].name) != -1
-      ) {
-        sw = matchArray[i].value;
-        openingType = matchArray[i].openingType;
-      }
-    }
-  }
-  if (!sw) sw =  storageData.tabOpeningPosition;
-  switch (sw) {
-    case "first":
-      index = 0;
-      break;
-    case "last":
-      index = 9999;
-      break;
-    case "right":
-      index = CurrentTabIndex[windowId]+1;
-      break;
-    case "left":
-      index = CurrentTabIndex[windowId];
-      break;
-    case "default":
-      break;
-  }
+    let currentTab = tabs[0];
+    let groupId = currentTab.groupId && currentTab.groupId !== -1 ? currentTab.groupId : null;
+    let index = await doOnCreated(tab);
+    let open = await processNewTabActivation(tab);
+    console.log("INDEX", index);
+    // Mark as creating to prevent infinite loop
+   
+    creatingNewTab = true;
 
-  if (index != -1) {
-    if (windowId == tab.windowId) {
-      chrome.tabs.move(tab.id, {
-        index: index 
-      });
-
-      //console.log("running 1");
-    } else {
-      if (tab.url == "") {
-        PendingPopup = {
-          tabId: tab.id,
-          windowId: windowId,
-          index: index
-        };
-        //console.log( tab.index + "Return 4" + tab.id);
+    chrome.tabs.create({
+      url: tab.pendingUrl || tab.url || "chrome://newtab/",
+      index: index,
+      windowId: tab.windowId,
+      pinned: tab.pinned
+    }, async function(newTab) {
+      if (chrome.runtime.lastError) {
+        console.warn(`Failed to create tab at index ${index}:`, chrome.runtime.lastError);
+        creatingNewTab = false; // Reset flag on failure
         return;
       }
-      //console.log("running 2");
-      chrome.tabs.move(tab.id, {
-        windowId: windowId,
-        index: index
-      });
 
-      FromPopupAttaching = 1;
+      console.log(`Tab created at index ${index}`);
+
+      if (groupId !== null) {
+        chrome.tabs.group({ tabIds: newTab.id, groupId: groupId }, function() {
+          if (chrome.runtime.lastError) {
+            console.warn(`Failed to add tab ${newTab.id} to group ${groupId}:`, chrome.runtime.lastError);
+          } else {
+            console.log(`Tab ${newTab.id} added to group ${groupId}`);
+          }
+        });
+      }
+
+      // Ensure the tab is highlighted (selected) if `open` is true
+
+
+      // Remove the original incorrectly positioned tab
+      deletedTabDone = false;
+      chrome.tabs.remove(tab.id, function() {
+        console.log(`Removed incorrectly positioned tab ${tab.id}`);
+        creatingNewTab = false; // Reset flag after removal
+      });
+    });
+ 
+
+    if (open) {
       chrome.tabs.update(
         tab.id,
         {
@@ -199,19 +268,12 @@ let openingType = null;
           FromPopupAttaching = 0;
         }
       );
-    }
-  }
-  
-  processNewTabActivation(tab, windowId, openingType);
-}
 
-chrome.tabs.onCreated.addListener(function(tab) {
-  var url = "";
-  ChromeWrapper.chromeTabsQuery({ active: true, currentWindow: true }, function(tabs) {
-    url = tabs[0].url;
+    }
+  
   });
-  waitForTabLoad(tab.id).then(doOnCreated(tab));
 });
+
 
 chrome.tabs.onActivated.addListener(function(info) {
 
@@ -236,29 +298,12 @@ chrome.tabs.onActivated.addListener(function(info) {
   // Update ID of currently active tab in the current window
   
 });
-
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.url) {
     savedUrls[tabId] = changeInfo.url;
   }
-  if (changeInfo.url != null && PendingPopup && tab.id == PendingPopup.tabId) {
-    if (!isExceptionUrl(tab.url, storageData.AlwaysSameWindowException)) {
-      chrome.tabs.move(tab.id, {
-        windowId: PendingPopup.windowId,
-        index: PendingPopup.index
-      });
-      if(savedUrls[tabId] != null)
-      savedUrls[tabId] = tab.url;
-      processNewTabActivation(tab, PendingPopup.windowId, null);
-    } else {
-    }
-    PendingPopup = null;
-    
-  }
-  
-  //if(changeInfo.status =="complete" ){ console.log(" RUNIN COMPLETE"); updateTabInfo(tabId); }
-  
 });
+
 
 
 
@@ -266,11 +311,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 chrome.tabs.onRemoved.addListener((tabId, removeInfo)=>{
   FromOnRemoved = 1; 
    //onRemoved = true; 
-  //console.log("OnRemoved " + tabId + " R " +removeInfo.tabId + " Lock ");
+  console.log("OnRemoved " + tabId + " R " +removeInfo.tabId + " Lock ");
 
-   updateActivedTabOnRemoved(removeInfo.windowId, tabId);  
-   
-  
+
+
+    updateActivedTabOnRemoved(removeInfo.windowId, removeInfo.groupId, tabId);  
+
 });//Function End
 
 //
@@ -288,7 +334,7 @@ chrome.tabs.onMoved.addListener((tabId, moveInfo)=>{
 
 chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
   FromOnRemoved = 1;
-  //console.log("onDetached " + tabId + " R " +removeInfo.tabId);
+  console.log("onDetached " + tabId + " R " +removeInfo.tabId);
    updateActivedTabOnRemoved(detachInfo.oldWindowId, tabId);
 });
 chrome.windows.onCreated.addListener(function(window) {
@@ -324,61 +370,41 @@ chrome.windows.onFocusChanged.addListener(function(windowId) {
   }
 });
 
-function processNewTabActivation(tab, windowId, openingType) {
-  //console.log("processNewTabActivation");
+async function processNewTabActivation(tab) {
+  console.log("processNewTabActivation");
   //console.log("processNewTabActivation   " + localStorage["newCreatedTab"]);
 //console.log(tab.index + " processNewTabActivation " + tab.id);
-
-if(openingType == null) openingType = storageData.newCreatedTab;
+let openingType= storageData.newCreatedTab;
+if(openingType != null){
 
   switch (openingType) {
     case "foreground":
-      chrome.tabs.update(tab.id, {
-        selected: true
-      });
+     return true;
       break;
     case "background":
       if (tab.url.match(/^chrome/)) {
+        return false;
         break;
       }
-     // updateActiveTabInfo(tab.id);
-      var activateTabId =
-        TabIdsInActivatedOrder[windowId][
-          TabIdsInActivatedOrder[windowId].length - 1
-        ]; 
-      if (activateTabId == undefined) {
-        //console.log("activateTabId == undefined");
-        break;
-      }
-      //console.log("activateTabId  "+ activateTabId);
-      if(activateTabId){
-        chrome.tabs.get(activateTabId, function(tab) {
-          if (tab == undefined) return;
-          var windowId = tab.windowId;
-          CurrentTabIndex[windowId] = tab.index;
-          chrome.tabs.update(activateTabId, {
-            selected: true
-          });
-        
-       });
-
-       
-      }
-      break;
     default:
       if (PendingPopup && tab.id == PendingPopup.tabId) {
-        chrome.tabs.update(tab.id, {
-          selected: true
-        });
+        return true;
       }
       break;
   }
 }
-
+}
+async function getCurrentTab() {
+  let queryOptions = { active: true, lastFocusedWindow: true };
+  // `tab` will either be a `tabs.Tab` instance or `undefined`.
+  let [tab] = await chrome.tabs.query(queryOptions);
+  return tab;
+}
 function updateIndex(tabId){
   //console.log("Update " + tabId) && localStorage["tabClosingBehavior"] != "default"
-  
+ 
   if(tabId && storageData.tabClosingBehavior != "default"){
+    console.log(tabId, "updateIndex" ,TabIdsInActivatedOrder );
   chrome.tabs.get(tabId, function(tab) {
     if (tab == undefined) return;
     var windowId = tab.windowId;
@@ -389,12 +415,9 @@ function updateIndex(tabId){
     
   });
 }else{
-
-  
-  
 }
 }
-function updateActiveTabInfo(tabId) {
+function updateActiveTabInfo(tabId, groupId) {
 
 //console.log("updateActiveTabInfo " + tabId);
   chrome.tabs.get(tabId, function(tab) {
@@ -405,74 +428,75 @@ function updateActiveTabInfo(tabId) {
       TabIdsInActivatedOrder[windowId] = new Array();
     }
     if (
-      TabIdsInActivatedOrder[windowId][
-        TabIdsInActivatedOrder[windowId].length - 1
-      ] != tabId
+      TabIdsInActivatedOrder[windowId] &&
+      TabIdsInActivatedOrder[windowId].length > 0 &&
+      TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1].tabId !== tabId
     ) {
-      if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
+      if (TabIdsInActivatedOrder[windowId].some(entry => entry.tabId === tabId)) {
         splice(tabId, windowId);
       }
-      push(tabId, windowId);
+      push(tabId, groupId, windowId);
     }
   });
 
 }
 async function movedTabChangeByIndex(fromIndex, toIndex, tabId) {
-  chrome.tabs.get(tabId, function(tab) {
-    if (tab == undefined) return;
-    var windowId = tab.windowId;
-    CurrentTabIndex[windowId] = tab.index;
-    if (TabIdsInActivatedOrder[windowId] == undefined) {
-      TabIdsInActivatedOrder[windowId] = new Array();
-    }
-    if (
-      TabIdsInActivatedOrder[windowId][
-        TabIdsInActivatedOrder[windowId].length - 1
-      ] != tabId
-    ) {
-      if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) { async() =>{
-       // let unlock = await mutex.lock(); // wait until mutex is unlocked
-        var toObject = TabIdsInActivatedOrder[windowId][toIndex];
-        TabIdsInActivatedOrder[windowId][toIndex] = TabIdsInActivatedOrder[windowId][fromIndex];
-        TabIdsInActivatedOrder[windowId][fromIndex] = toObject; 
-    //console.log("Spliced " + tabId);
-   // unlock(); 
-          
-      }
-      }      
-    }
-  });
+  let windowId = null;
 
+  // Find the windowId that contains the tabId
+  for (const winId in TabIdsInActivatedOrder) {
+    if (TabIdsInActivatedOrder[winId].some(entry => entry.tabId === tabId)) {
+      windowId = winId;
+      break;
+    }
+  }
+
+  if (!windowId) return; // Exit if no matching windowId is found
+
+  // Ensure indices are within bounds
+  if (fromIndex >= 0 && toIndex >= 0 &&
+      fromIndex < TabIdsInActivatedOrder[windowId].length &&
+      toIndex < TabIdsInActivatedOrder[windowId].length) {
+
+    // Swap the two tab objects
+    [TabIdsInActivatedOrder[windowId][fromIndex], TabIdsInActivatedOrder[windowId][toIndex]] =
+    [TabIdsInActivatedOrder[windowId][toIndex], TabIdsInActivatedOrder[windowId][fromIndex]];
+  }
 }
 
-function updateActivedTabOnRemoved(windowId, tabId) {
+function updateActivedTabOnRemoved(windowId,groupId, tabId) {
   var activeTabRemoved; 
-  if (
-    TabIdsInActivatedOrder[windowId][
-      TabIdsInActivatedOrder[windowId].length - 1
-    ] === tabId
-  ) {
-    activeTabRemoved = true;
-  } else {
-    activeTabRemoved = false; 
-  }
+  if (TabIdsInActivatedOrder[windowId]) {
+
+  const lastEntry = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1];
+  activeTabRemoved = lastEntry ? lastEntry.tabId === tabId : false;
+  
   //console.log("updateActivedTabOnRemoved " + activeTabRemoved + "  " + tabId);
-  if (TabIdsInActivatedOrder[windowId].indexOf(tabId) != -1) {
-   splice(tabId,windowId);
+  if (TabIdsInActivatedOrder[windowId].some(entry => entry.tabId === tabId)) {
+    splice(tabId, windowId);
   }else {
        
   }
-
+  }
+  console.log("updateActivedTabOnRemoved half");
   if (!activeTabRemoved ) {
     ChromeWrapper.chromeTabsQuery({ windowId:windowId  }, function(tabs) {
       if (tabs == undefined) { return;  }
       //console.log("TEST" + CurrentTabIndex[tabs.windowId] + " tabId " + tabId) + " index " + tabs.index;
       //CurrentTabIndex[windowId] = tabs.index;
-      updateIndex(TabIdsInActivatedOrder[windowId][
-        TabIdsInActivatedOrder[windowId].length - 1]);
+
+      let activateTabId = null;
+
+      if (TabIdsInActivatedOrder[windowId] && TabIdsInActivatedOrder[windowId].length > 0) {
+         activateTabId = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1].tabId;
+        updateIndex(activateTabId);
+      }
         FromOnRemoved = 0;
     });
-  }else matchRemove(windowId,tabId);
+  }else {matchRemove(windowId,groupId,tabId, deletedTabDone);
+
+    deletedTabDone = true;
+  }
 
    if (TabSwapMode == 1) {
     TabSwapMode = 0;
@@ -482,25 +506,42 @@ function updateActivedTabOnRemoved(windowId, tabId) {
   
 }
 async function splice(tabId, windowId) {
+  if (!TabIdsInActivatedOrder[windowId]) {
+    console.warn(`splice: No array exists for window ${windowId}`);
+    return;
+  }
 
-  //let unlock = await mutex.lock(); // wait until mutex is unlocked
-  TabIdsInActivatedOrder[windowId].splice(
-    TabIdsInActivatedOrder[windowId].indexOf(tabId),
-    1 );
-    //console.log("Spliced " + tabId);
-  //  unlock(); 
- 
+  // Ensure `tabId` is a number (match the type)
+  tabId = Number(tabId);
+
+  // Find the index of the object with the given tabId
+  const index = TabIdsInActivatedOrder[windowId].findIndex(entry => Number(entry.tabId) === tabId);
+
+  if (index === -1) {
+    console.warn(`splice: Tab ID ${tabId} not found in window ${windowId}`);
+    return;
+  }
+  // Remove the tab from the array
+  TabIdsInActivatedOrder[windowId].splice(index, 1);
 }
-async function push(tabId, windowId) {
 
-  //let unlock = await mutex.lock(); // wait until mutex is unlocked
-  TabIdsInActivatedOrder[windowId].push(tabId);
-    //console.log("Push " + tabId);
-  //  unlock(); 
- 
+
+async function push(tabId, groupId, windowId) {
+  if (!windowId) return; // Prevents undefined windowId issues
+  if (!TabIdsInActivatedOrder[windowId]) {
+    TabIdsInActivatedOrder[windowId] = [];
+  }
+
+  // Ensure `tabId` does not already exist
+  if (!TabIdsInActivatedOrder[windowId].some(entry => entry.tabId === tabId)) {
+    TabIdsInActivatedOrder[windowId].push({ tabId, groupId });
+  } else {
+    console.warn(`push: Tab ID ${tabId} already exists in window ${windowId}, skipping duplicate.`);
+  }
 }
 
-function matchRemove(windowId, tabId){
+function matchRemove(windowId, groupId, tabId, run){
+  if(run){
   var sw = null;
   // Handle errors and match of closing
 if(matchArray != null){
@@ -529,12 +570,17 @@ if(matchArray != null){
         activateTabByIndex(windowId, CurrentTabIndex[windowId] - 1);  FromOnRemoved = 0;
       break;
     case "order":
-      var activateTabId =
-        TabIdsInActivatedOrder[windowId][
-          TabIdsInActivatedOrder[windowId].length - 1];
+
+      console.log("order");
+    var activateTabId = null;
+
+    if (TabIdsInActivatedOrder[windowId] && TabIdsInActivatedOrder[windowId].length > 0) {
+      activateTabId = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1].tabId;
+      updateIndex(activateTabId);
+    }
        
        //console.log(" ID order " + activateTabId);
-       updateIndex(activateTabId);
+      
        //CurrentTabIndex[windowId] = activateTabId;
        
       break;
@@ -543,13 +589,14 @@ if(matchArray != null){
       updateIndex(activateTabId); FromOnRemoved = 0;
       break;
   }
-
+}
 }
 
 function activateTabByIndex(windowId, tabIndex) {
   //console.log(" activateTabByIndex");
-  if(TabIdsInActivatedOrder[windowId][
-    TabIdsInActivatedOrder[windowId].length - 1] != -1){
+  if (TabIdsInActivatedOrder[windowId] &&
+    TabIdsInActivatedOrder[windowId].length > 0 &&
+    TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1] != -1) {
 //console.log(" activateTabByIndex - IF");
 
     }
@@ -585,10 +632,8 @@ function isExceptionUrl(url, exceptionString) {
 function lastTab(info,tab) {
   var windowId = tab.windowId;
 
-  var activateTabId =
-        TabIdsInActivatedOrder[windowId][
-          TabIdsInActivatedOrder[windowId].length - 2
-        ];
+  var lastEntry = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 2];
+  var activateTabId = lastEntry ? lastEntry.tabId : null;
       chrome.tabs.update(activateTabId, {
         selected: true
       });
