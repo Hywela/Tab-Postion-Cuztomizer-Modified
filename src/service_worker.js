@@ -16,7 +16,7 @@ var newTabInProcess = false;
 let storageData = null;
 var alwaysSameWindow = true;
 loadStorage();
-var DEBUG = true;
+var DEBUG = false;
 if(!DEBUG){
    
     var methods = ["log", "debug", "warn", "info"];
@@ -200,11 +200,38 @@ async function doOnCreated(tab) {
        break;
    }
 
-  return index;
+
+
+   if (index != -1 || index != null) {
+    if (windowId == tab.windowId) {
+      chrome.tabs.move(tab.id, {
+        index: index 
+      });
+      //console.log("running 1");
+    } else {
+      if (tab.url == "") {
+        PendingPopup = {
+          tabId: tab.id,
+          windowId: windowId,
+          index: index
+        };
+        //console.log( tab.index + "Return 4" + tab.id);
+        return;
+      }
+      //console.log("running 2");
+      chrome.tabs.move(tab.id, {
+        windowId: windowId,
+        index: index
+      });
+ }
 }
+
+await processNewTabActivation(tab, windowId, openingType);
+}
+
 let creatingNewTab = false; // Prevent infinite loop
 let deletedTabDone = true; // Prevent infinite loop
-
+/*
 chrome.tabs.onCreated.addListener(async function(tab) {
   if (creatingNewTab) {
     console.warn("Prevented infinite tab creation loop.");
@@ -272,8 +299,74 @@ chrome.tabs.onCreated.addListener(async function(tab) {
     }
   
   });
-});
+});*/
 
+chrome.tabs.onCreated.addListener(async function(tab) {
+  /* if (creatingNewTab) {
+     console.warn("Prevented infinite tab creation loop.");
+     return;
+   }*/
+ 
+   ChromeWrapper.chromeTabsQuery({ active: true, currentWindow: true }, async function(tabs) {
+    // if (tabs.length === 0) return;
+ 
+     let currentTab = tabs[0];
+     let groupId = currentTab.groupId && currentTab.groupId !== -1 ? currentTab.groupId : null;
+     await doOnCreated(tab);
+     if (groupId !== null) {
+      chrome.tabs.group({ tabIds: tab.id, groupId: groupId }, function() {
+        if (chrome.runtime.lastError) {
+          console.warn(`Failed to add tab ${tab.id} to group ${groupId}:`, chrome.runtime.lastError);
+        } else {
+          console.log(`Tab ${tab.id} added to group ${groupId}`);
+        }
+      });
+    }
+     // Mark as creating to prevent infinite loop
+    
+    // creatingNewTab = true;
+ 
+    /*
+     chrome.tabs.create({
+       url: tab.pendingUrl || tab.url || "chrome://newtab/",
+       index: index,
+       windowId: tab.windowId,
+       pinned: tab.pinned
+     }, async function(newTab) {
+       if (chrome.runtime.lastError) {
+         console.warn(`Failed to create tab at index ${index}:`, chrome.runtime.lastError);
+         creatingNewTab = false; // Reset flag on failure
+         return;
+       }
+ 
+       console.log(`Tab created at index ${index}`);
+ 
+       if (groupId !== null) {
+         chrome.tabs.group({ tabIds: newTab.id, groupId: groupId }, function() {
+           if (chrome.runtime.lastError) {
+             console.warn(`Failed to add tab ${newTab.id} to group ${groupId}:`, chrome.runtime.lastError);
+           } else {
+             console.log(`Tab ${newTab.id} added to group ${groupId}`);
+           }
+         });
+       }
+ 
+       // Ensure the tab is highlighted (selected) if `open` is true
+ 
+ 
+       // Remove the original incorrectly positioned tab
+       deletedTabDone = false;
+       chrome.tabs.remove(tab.id, function() {
+         console.log(`Removed incorrectly positioned tab ${tab.id}`);
+         creatingNewTab = false; // Reset flag after removal
+       });
+     }); */
+ 
+
+ 
+   });
+
+ });
 
 chrome.tabs.onActivated.addListener(function(info) {
 
@@ -370,29 +463,55 @@ chrome.windows.onFocusChanged.addListener(function(windowId) {
   }
 });
 
-async function processNewTabActivation(tab) {
-  console.log("processNewTabActivation");
+
+
+async function processNewTabActivation(tab, windowId, openingType) {
+  //console.log("processNewTabActivation");
   //console.log("processNewTabActivation   " + localStorage["newCreatedTab"]);
 //console.log(tab.index + " processNewTabActivation " + tab.id);
-let openingType= storageData.newCreatedTab;
-if(openingType != null){
+
+if(openingType == null) openingType = storageData.newCreatedTab;
 
   switch (openingType) {
     case "foreground":
-     return true;
+      chrome.tabs.update(tab.id, {
+        selected: true
+      });
       break;
     case "background":
       if (tab.url.match(/^chrome/)) {
-        return false;
         break;
       }
+     // updateActiveTabInfo(tab.id);
+      var activateTabId = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1].tabId;
+      if (activateTabId == undefined) {
+        //console.log("activateTabId == undefined");
+        break;
+      }
+      //console.log("activateTabId  "+ activateTabId);
+      if(activateTabId){
+        chrome.tabs.get(activateTabId, function(tab) {
+          if (tab == undefined) return;
+          var windowId = tab.windowId;
+          CurrentTabIndex[windowId] = tab.index;
+          chrome.tabs.update(activateTabId, {
+            selected: true
+          });
+        
+       });
+
+       
+      }
+      break;
     default:
       if (PendingPopup && tab.id == PendingPopup.tabId) {
-        return true;
+        chrome.tabs.update(tab.id, {
+          selected: true
+        });
       }
       break;
   }
-}
+
 }
 async function getCurrentTab() {
   let queryOptions = { active: true, lastFocusedWindow: true };
@@ -505,6 +624,7 @@ function updateActivedTabOnRemoved(windowId,groupId, tabId) {
   
   
 }
+
 async function splice(tabId, windowId) {
   if (!TabIdsInActivatedOrder[windowId]) {
     console.warn(`splice: No array exists for window ${windowId}`);
