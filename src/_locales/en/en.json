@@ -82,7 +82,7 @@
 },
 "menuButton": {
    "description": "Context menu button.",
-   "message": "Show conext menu"
+   "message": "Show Context Menu(Not implemented yet)"
 },
 
   "open": {

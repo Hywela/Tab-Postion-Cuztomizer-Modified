@@ -85,14 +85,8 @@ const config = {
         to: 'manifest.json',
         transform: (content) => {
           const jsonContent = JSON.parse(content);
-          jsonContent.version = version;
-          jsonContent["background"] = {
-            "service_worker": "service_worker.js",
-            "type": "module"
-          };
-          jsonContent["content_security_policy"] = {
-            "extension_pages": "script-src 'self'; object-src 'self'"
-          };
+     
+       
           return JSON.stringify(jsonContent, null, 2);
         },
       },

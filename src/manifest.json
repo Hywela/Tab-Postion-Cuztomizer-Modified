@@ -2,22 +2,22 @@
   "name": "Tab Position Customizer - Modified",
   "short_name": "Tab Position",
   "description": "A extension for position of tabs",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "manifest_version": 3,
   "icons": {
     "48": "icons/icon_48.png",
     "128": "icons/icon_128.png",
     "256": "icons/icon_256.png"
   },
-"background": {
-  "service_worker": "background.js",
-  "type": "module"
-},
-"content_security_policy": {
-  "extension_pages": "script-src 'self'; object-src 'self'"
-},
-  "default_locale":  "en",
-  "options_page":  "options/options.html",
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "default_locale": "en",
+  "options_page": "options/options.html",
   "permissions": [
     "tabs",
     "storage"
@@ -47,5 +47,5 @@
       },
       "description": "New tab to the right"
     }
-  } 
+  }
 }
