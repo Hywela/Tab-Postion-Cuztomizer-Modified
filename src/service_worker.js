@@ -33,8 +33,8 @@ function scheduleCleanup() {
     }, 30000); // Delay of 5 seconds (adjust as needed)
   }
 }
-chrome.windows.onRemoved.addListener(scheduleCleanup);
-chrome.tabs.onRemoved.addListener(scheduleCleanup);
+//chrome.windows.onRemoved.addListener(scheduleCleanup);
+//chrome.tabs.onRemoved.addListener(scheduleCleanup);
 
 loadStorageLocal();
 
@@ -43,14 +43,14 @@ loadStorageLocal();
   "tabOpeningPosition", "tabClosingBehavior", "list", "newCreatedTab", "button_last_tab",
 ]).then(data => {
   storageData = data;
-  console.log(storageData, "loaded");
+  //console.log(storageData, "loaded");
 }); 
  
 chrome.storage.sync.get([
   "tabOpeningPosition", "tabClosingBehavior", "list", "newCreatedTab", "button_last_tab",
 ]).then(data => { 
   storageData = data;
-  console.log(storageData, "loaded");
+  //console.log(storageData, "loaded");
 });
  async function loadStorageLocal(){
   alwaysSameWindow = (await getLocalstorage("AlwaysSameWindow")) || false; // Default to false if missing
@@ -60,17 +60,19 @@ chrome.storage.sync.get([
 }
 
 let busy =
-chrome.storage.local.get().then(data => {
+chrome.storage.session.get().then(data => {
   CurrentTabIndex = data.CurrentTabIndex || {};
    savedUrls = data.savedUrls || {};
    TabIdsInActivatedOrder = data.TabIdsInActivatedOrder || {};
+   ActiveWindowId = data.ActiveWindowId || -1;
    busy = null;
  });
 
- const saveState = () => chrome.storage.local.set({
+ const saveState = () => chrome.storage.session.set({
    CurrentTabIndex,
    savedUrls,
-   TabIdsInActivatedOrder
+   TabIdsInActivatedOrder,
+   ActiveWindowId
  });
 
 
@@ -152,7 +154,7 @@ chrome.windows.getAll(
     //console.log("chrome.windows.getAll");
   
     loadStorageLocal();
-    console.log("getAll");
+    //console.log("getAll");
     if (storageData == null) {
       if (loadStorage) await loadStorage;
     }
@@ -888,6 +890,7 @@ async function matchRemove(windowId, groupId, tabId, run){
 
     if (TabIdsInActivatedOrder[windowId] && TabIdsInActivatedOrder[windowId].length > 0) {
       activateTabId = TabIdsInActivatedOrder[windowId][TabIdsInActivatedOrder[windowId].length - 1].tabId;
+
         await updateIndex(activateTabId);
     }
        
