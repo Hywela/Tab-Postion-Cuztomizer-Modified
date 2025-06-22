@@ -9,7 +9,7 @@
 <br>
 <br>
 <br>
-
+<b>Discontinued</b>
 #### Based on: Tab Position Customizer 2
 
 https://github.com/jaden/Tab-Position-Customizer-2
