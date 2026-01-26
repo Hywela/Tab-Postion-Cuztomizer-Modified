@@ -1,3 +1,5 @@
 /node_modules
 /*.log
 /dist
+src/service_worker copy 2.js
+src/service_worker copy.js
