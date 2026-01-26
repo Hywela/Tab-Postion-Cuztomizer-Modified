@@ -515,7 +515,6 @@ chrome.tabs.onCreated.addListener(async function(tab) {
   try {
     chrome.tabs.onActivated.addListener(function(info) {
       //console.log("chrome.tabs.onActivated.addListener");
-
       ChromeWrapper.chromeTabsQuery({}, async function(tabs) {
     
         if (FromOnCreated == 1) {
