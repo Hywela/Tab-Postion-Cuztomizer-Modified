@@ -69,7 +69,6 @@ function initText() {
 }
 
 function restoreOptions() {
-  restoreFormButton(document.open, "tabOpeningPosition");
   restoreFormButton(document.close, "tabClosingBehavior");
   restoreFormButton(document.new_tab, "newCreatedTab");
   restoreSameWindowForm();
@@ -79,7 +78,7 @@ function restoreOptions() {
 
 function restoreSameWindowForm() {
   var sameWindowForm = document.same_window;
-  if (localStorage["AlwaysSameWindow"] == "true") {
+  if (getLocalstorage("AlwaysSameWindow") == "true") {
     sameWindowForm.true.checked = true;
   }
 
@@ -95,7 +94,7 @@ function restoreSameWindowForm() {
     "reset",
     function(event) {
       event.preventDefault();
-      delete localStorage["AlwaysSameWindowException"];
+     // delete getLocalstorage("AlwaysSameWindowException");
       restoreSameWindowFormSub();
     },
     false
@@ -114,15 +113,16 @@ function restoreSameWindowFormSub() {
   sameWindowForm.exception.disabled = false;
   sameWindowForm.reset.disabled = false;
 
-  if (localStorage["AlwaysSameWindowException"] == null) {
-    localStorage["AlwaysSameWindowException"] = sameWindowFormExceptionDefault;
+  if (getLocalstorage("AlwaysSameWindowException") == null) {
+    saveTolocalstorage("AlwaysSameWindowException",sameWindowFormExceptionDefault);
   }
-  sameWindowForm.exception.value = localStorage["AlwaysSameWindowException"];
+  
+  sameWindowForm.exception.value = getLocalstorage("AlwaysSameWindowException");
 }
 
 function restoreExternalLinkDefault() {
   var externalLinkDefault = document.external_link_default;
-  if (localStorage["ExternalLinkDefault"] == "true") {
+  if (getLocalstorage("ExternalLinkDefault") == "true") {
     externalLinkDefault.true.checked = true;
   }
 
@@ -131,7 +131,7 @@ function restoreExternalLinkDefault() {
 
 function restoreExternalLinkUnfocus() {
   var externalLinkUnfocus = document.external_link_unfocus;
-  if (localStorage["ExternalLinkUnfocus"] == "true") {
+  if (getLocalstorage("ExternalLinkUnfocus") == "true") {
     externalLinkUnfocus.true.checked = true;
   }
 
@@ -171,9 +171,9 @@ function saveFormButton(formName, storageKey) {
 
 function saveSameWindowForm() {
   var sameWindowForm = document.same_window;
-  localStorage["AlwaysSameWindow"] = sameWindowForm.true.checked
+  saveTolocalstorage("AlwaysSameWindow",sameWindowForm.true.checked
     ? "true"
-    : "false";
+    : "false");
   restoreSameWindowFormSub();
 }
 
@@ -189,21 +189,35 @@ function saveSameWindowFormException() {
     }
   }
 
-  localStorage["AlwaysSameWindowException"] = saveString;
+  saveTolocalstorage("AlwaysSameWindowException",saveString);
 }
-
+function saveTolocalstorage(storage, input){
+  chrome.storage.local.set({ storage: input }).then(() => {
+});
+}
+async function getLocalstorage(storage){
+  return new Promise((resolve) => {
+    chrome.storage.local.get([storage], (result) => {
+      if (chrome.runtime.lastError) {
+        console.error("Storage Error:", chrome.runtime.lastError);
+        resolve(null);
+      } else {
+        resolve(result[storage] || null); // Return null if key does not exist
+      }
+    });
+  });
+}
 function saveExternalLinkDefault() {
   var externalLinkDefault = document.external_link_default;
-  localStorage["ExternalLinkDefault"] = externalLinkDefault.true.checked
+  saveTolocalstorage("ExternalLinkDefault",externalLinkDefault.true.checked
     ? "true"
-    : "false";
+    : "false");
 }
-
 function saveExternalLinkUnfocus() {
   var externalLinkUnfocus = document.external_link_unfocus;
-  localStorage["ExternalLinkUnfocus"] = externalLinkUnfocus.true.checked
-    ? "true"
-    : "false";
+    saveTolocalstorage("ExternalLinkUnfocus",externalLinkUnfocus.true.checked
+      ? "true"
+      : "false");
 }
 function restoreList() {
   chrome.storage.sync.set({ list: list }, function() {});
